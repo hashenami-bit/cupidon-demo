@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A letter for you</title>
+<meta name="description" content="Someone wrote you a sealed letter. Open it with your code.">
+<meta property="og:title" content="A letter for you 💌">
+<meta property="og:description" content="Someone wrote you a sealed letter. Open it with your code.">
+<meta property="og:type" content="website">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2A0E1F">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Infant:wght@600&family=Great+Vibes&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="corner-lang" id="uiLang"></div>
+<main class="stage">
+
+  <section class="screen is-active" id="s-loading"><p class="muted" data-t="loading">Opening…</p></section>
+
+  <section class="screen" id="s-missing" tabindex="-1">
+    <h1 class="script-title" data-t="missingTitle">Letter not found</h1>
+    <p class="center" id="missingText" data-t="missingText">This link is incomplete or the letter was deleted. Ask the person who sent it to send the link again.</p>
+  </section>
+
+  <section class="screen" id="s-notready" tabindex="-1">
+    <h1 class="script-title" data-t="notReadyTitle"></h1>
+    <p class="center" data-t="notReadyText"></p>
+  </section>
+
+  <!-- 1. Code -->
+  <section class="screen" id="s-pin" tabindex="-1">
+    <div class="pin-card">
+      <div class="envelope" aria-hidden="true">
+        <div class="env-back airmail"><i></i></div>
+        <div class="env-letter"></div>
+        <div class="env-pocket"><i></i></div>
+        <div class="env-flap"><i></i></div>
+        <span class="seal seal-static"><span>♥</span></span>
+      </div>
+      <h1 class="script-title" data-t="pinTitle">A letter for you</h1>
+      <p id="pinLabel" data-t="pinLabel">Type the 4-digit code to open it.</p>
+      <p class="hint" id="pinHint" hidden></p>
+      <div class="pin" id="pin" role="group" aria-labelledby="pinLabel">
+        <input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1">
+        <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 2">
+        <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 3">
+        <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 4">
+      </div>
+      <p class="error" id="pinError" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- 2. Envelope -->
+  <section class="screen" id="s-envelope" tabindex="-1">
+    <p class="env-caption"><span data-t="to">To</span><span class="script" data-name></span></p>
+    <div class="envelope" id="envelope">
+      <div class="env-back airmail"><i></i></div>
+      <div class="env-letter"></div>
+      <div class="env-pocket"><i></i></div>
+      <div class="env-flap"><i></i></div>
+      <button class="seal" id="sealBtn" type="button"><span data-t="pressMe">Press me</span></button>
+    </div>
+    <p class="open-hint" data-t="openHint">Break the seal to read it.</p>
+  </section>
+
+  <!-- 3. Letter -->
+  <section class="screen" id="s-letter" tabindex="-1">
+    <article class="letter paper">
+      <h1 class="letter-greeting" id="lGreeting"></h1>
+      <div id="lBody"></div>
+      <p class="letter-ps" id="lNote" hidden></p>
+      <p class="letter-closing" id="lClosing"></p>
+      <p class="letter-sign" id="lSign"></p>
+    </article>
+    <button class="btn" id="toDishes" type="button" data-t="next">Next</button>
+  </section>
+
+  <!-- 4. Dishes -->
+  <section class="screen" id="s-dishes" tabindex="-1">
+    <header class="screen-head">
+      <p class="script-title" data-dear></p>
+      <h2 data-t="dishesQ">What would you like to eat on our date?</h2>
+      <p class="muted" data-t="dishesTap">Tap the one you like most.</p>
+    </header>
+    <div class="stamps" id="stamps"></div>
+  </section>
+
+  <!-- 5. Day and time -->
+  <section class="screen" id="s-date" tabindex="-1">
+    <header class="screen-head">
+      <p class="script-title" data-t="dateKicker">Lovely choice</p>
+      <h2 data-t="dateQ">When shall we go?</h2>
+      <p class="muted" data-t="dateHelp">Choose a day, then a time.</p>
+    </header>
+    <div class="paper cal">
+      <div class="cal-head">
+        <button class="cal-nav" id="calPrev" type="button" aria-label="Previous month" data-t-label="prevMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h3 id="calMonth" aria-live="polite"></h3>
+        <button class="cal-nav" id="calNext" type="button" aria-label="Next month" data-t-label="nextMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="times">
+        <h3 data-t="time">Time</h3>
+        <div id="times"><p class="muted-ink">Choose a day first.</p></div>
+      </div>
+    </div>
+    <div class="date-summary">
+      <p id="dateSummary" aria-live="polite">No day chosen yet</p>
+      <button class="btn" id="dateDone" type="button" disabled data-t="done">Done</button>
+      <p class="error" id="saveError" role="alert"></p>
+      <button class="link-btn" id="backToDishes" type="button" data-t="changeDish">Change the dish</button>
+    </div>
+  </section>
+
+  <!-- 6. Invitation -->
+  <section class="screen" id="s-final" tabindex="-1">
+    <div class="invitation airmail">
+      <div class="inv-inner">
+        <span class="seal seal-static" id="invSeal"><span></span></span>
+        <p class="inv-kicker" data-t="invTitle">Invitation</p>
+        <p class="inv-dear" data-dear></p>
+        <p class="inv-line" data-t="invLine">you are invited to a date on</p>
+        <p class="inv-date" id="invDate"></p>
+        <p class="inv-when" id="invWhen"></p>
+        <figure class="inv-dish">
+          <div class="stamp-edge"><img id="invPhoto" alt=""></div>
+          <figcaption id="invDish"></figcaption>
+        </figure>
+        <p class="inv-place" id="invPlace"></p>
+        <p class="inv-addr" id="invAddr"></p>
+        <p class="inv-addr" id="invPickup"></p>
+        <a class="btn btn-ghost btn-small inv-map" id="invMap" target="_blank" rel="noopener noreferrer" hidden data-t="openMaps">Open in Maps</a>
+        <p class="inv-sign" id="invSign"></p>
+      </div>
+    </div>
+    <div class="final-actions">
+      <button class="btn" id="saveBanner" type="button" data-t="save">Save invitation</button>
+    </div>
+    <p class="muted center" id="finalNote"></p>
+    <button class="link-btn" id="reread" type="button" data-t="reread">Read the letter again</button>
+  </section>
+
+</main>
+
+<div class="picture-sheet" id="pictureSheet" role="dialog" aria-modal="true" aria-labelledby="pictureHint" hidden>
+  <img id="pictureImg" alt="">
+  <p id="pictureHint" data-t="pictureHint"></p>
+  <button class="btn btn-light" id="pictureClose" type="button" data-t="close"></button>
+</div>
+<script type="module" src="js/girl.js"></script>
+</body>
+</html>

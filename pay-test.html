@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test payment</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2A0E1F">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Great+Vibes&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="corner-lang" id="uiLang"></div>
+<main class="stage">
+  <section class="screen is-active">
+    <div class="pay-box">
+      <h1 class="script-title test-pay-title" data-t="testPayT"></h1>
+      <p data-t="testPayText"></p>
+      <ul class="card-marks" aria-hidden="true"><li>Uzcard</li><li>Humo</li><li>Visa</li><li>Mastercard</li></ul>
+      <button class="btn" id="okBtn" type="button" data-t="testPayOk"></button>
+      <button class="link-btn" id="cancelBtn" type="button" data-t="testPayCancel"></button>
+      <p class="error" id="msg" role="status"></p>
+    </div>
+  </section>
+</main>
+<script type="module" src="js/pay-test.js"></script>
+</body>
+</html>
