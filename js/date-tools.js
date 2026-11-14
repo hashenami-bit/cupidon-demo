@@ -1,6 +1,6 @@
 // Her final screen: countdown maths and "add to calendar" (an .ics file made on her phone, or a Google Calendar link).
 // Times are "floating" local times (no time zone): the date means the same wall-clock time on her phone.
-import { pad } from './common.js';
+import { pad, downloadBlob } from './common.js';
 
 export const HOURS = 2;   // how long the date is in her calendar
 
@@ -38,13 +38,19 @@ function fold(line) {
 export function icsFile(ev, now = new Date()) {
   const end = new Date(ev.start.getTime() + HOURS * 3600e3);
   const utc = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const uid = String(ev.uid).replace(/[^A-Za-z0-9._-]/g, '');   // never a line break or other odd character (scan 2026-11-14 #2, F1)
   return [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Maktubim//Invitation//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-    'BEGIN:VEVENT', `UID:${ev.uid}@maktubim.uz`, `DTSTAMP:${utc}`, `DTSTART:${stamp(ev.start)}`, `DTEND:${stamp(end)}`,
+    'BEGIN:VEVENT', `UID:${uid}@maktubim.uz`, `DTSTAMP:${utc}`, `DTSTART:${stamp(ev.start)}`, `DTEND:${stamp(end)}`,
     `SUMMARY:${esc(ev.title)}`, ev.place ? `LOCATION:${esc(ev.place)}` : '', ev.details ? `DESCRIPTION:${esc(ev.details)}` : '',
     'BEGIN:VALARM', 'TRIGGER:-PT2H', 'ACTION:DISPLAY', `DESCRIPTION:${esc(ev.title)}`, 'END:VALARM',
     'END:VEVENT', 'END:VCALENDAR'
   ].filter(Boolean).map(fold).join('\r\n') + '\r\n';
+}
+
+// Saves the .ics file on this device (his list and her last page). Throws when the browser can't.
+export function saveIcs(ev, filename) {
+  downloadBlob(new Blob([icsFile(ev)], { type: 'text/calendar;charset=utf-8' }), filename);
 }
 
 export function googleCalUrl(ev) {

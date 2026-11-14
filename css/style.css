@@ -257,7 +257,7 @@ button.seal:hover { filter: brightness(1.08); }
   background: linear-gradient(180deg, #F6E3B7, #EFD393); color: #5A3B0B; text-align: center;
   font-weight: 600; font-size: .9rem; padding: 6px 16px;
 }
-.wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 72px; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 72px; overflow-x: clip; }   /* the card garlands stick out 18px: never let them make phones scroll sideways */
 
 /* gold flourish under every big title */
 .hero-title, .page-title, .sheet-title, .done-title, .script-title { background: url("../img/doodle/flourish-short.svg") no-repeat; background-size: 120px 24px; padding-bottom: 28px; }
@@ -323,9 +323,10 @@ button.seal:hover { filter: brightness(1.08); }
 @media (max-width: 640px) { .letter-row { grid-template-columns: 1fr; } .lr-actions { justify-content: start; } }
 .empty { text-align: center; padding: 48px 16px; border: 1.5px dashed #D9A9AE; border-radius: 12px; background: rgba(255, 250, 244, .6); }
 .empty p { margin: 0 0 18px; color: var(--ink-soft); }
+.empty-dove { --k-size: 130px; margin-bottom: 10px; }
 
 /* ---------- write a letter (form) ---------- */
-.sheet { padding: clamp(28px, 5vw, 52px); max-width: 860px; margin: 22px auto 0; }
+.sheet { --sheet-pad: clamp(28px, 5vw, 52px); padding: var(--sheet-pad); max-width: 860px; margin: 22px auto 0; }
 .sheet-title { margin: 0 0 4px; font-family: var(--script); font-weight: 400; color: var(--rose); font-size: clamp(3.2rem, 9vw, 4.6rem); line-height: 1.05; }
 .sheet-lead { margin: 14px 0 8px; color: var(--ink-soft); }
 .part { padding: 28px 0; border-top: 1px solid var(--line); }
@@ -421,11 +422,12 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35);
 }
 
-.submit-row { display: grid; gap: 10px; justify-items: center; padding-top: 30px; border-top: 1px solid var(--line); }
-.submit-row .btn { min-width: 250px; font-size: 1.15rem; }
-.submit-row .error { text-align: center; }
 .field-note { margin-top: 16px; }
 .link-cancel { color: var(--ink-soft); }
+/* his draft: "your letter is back" note at the top, "saved on this device" + Start over by the Done button */
+.draft-note { margin: 10px 0 0; padding: 10px 14px; border-left: 3px solid var(--gold); background: rgba(196, 145, 47, .08); border-radius: 0 10px 10px 0; color: var(--claret); }
+.draft-state { margin: 0; color: var(--ink-soft); font-size: .9rem; text-align: center; }
+.submit-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 28px; }
 .link-cancel:hover { color: var(--rose-deep); }
 
 /* ---------- sealed (link ready) ---------- */
@@ -440,13 +442,46 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
 .linkbox input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--claret); padding: 0 14px; font-size: 1rem;   /* 16px: iOS zooms smaller fields */ font-weight: 600; }
 .linkbox input:focus { outline: none; }
 .share-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.code-note, .in-app-note {
+.in-app-note {
   border: 1.5px dashed var(--gold); border-radius: 14px; background: rgba(255, 250, 244, .7); color: var(--claret);
 }
-.code-note { width: min(100%, 560px); padding: 16px 20px; text-align: left; }
-.code-note b { font-family: var(--hand); font-weight: 400; font-size: 1.9rem; letter-spacing: .12em; color: var(--rose); }
 
 .link-part { display: grid; justify-items: center; gap: 20px; width: 100%; }
+/* sealed: two boxes, 1 the link to send (+ QR), 2 the code to say */
+.done-box {
+  position: relative; display: grid; justify-items: center; gap: 16px; width: min(100%, 560px); padding: 26px 22px 24px;
+  background: var(--ivory); border-radius: 12px; box-shadow: var(--shadow-paper); outline: 1px solid var(--gold-soft); outline-offset: -9px;
+}
+.done-step { display: flex; align-items: center; gap: 12px; margin: 0; font-family: var(--hand); font-weight: 400; font-size: 1.8rem; line-height: 1.2; color: var(--claret); text-align: start; }
+.done-num {   /* the same wax as the seal */
+  flex: none; display: grid; place-items: center; width: 34px; height: 34px; padding-top: 2px; transform: rotate(-6deg);
+  border-radius: 48% 52% 51% 49% / 52% 47% 53% 48%; color: #FBDDD6; font-family: var(--serif); font-size: 1rem; font-weight: 600;
+  background: radial-gradient(circle at 34% 28%, #D2606F 0%, #A93049 46%, #6F1B2D 100%);
+  box-shadow: 0 0 0 2px #8A2236, 0 0 0 3.5px rgba(232, 193, 120, .75);
+}
+.done-box .linkbox { box-shadow: inset 0 0 0 1.5px var(--line); }
+.qr-row { display: flex; align-items: center; gap: 18px; width: 100%; padding-top: 16px; border-top: 1px dashed var(--line); text-align: start; }
+.qr { flex: none; width: 116px; height: 116px; border-radius: 8px; box-shadow: 0 0 0 1px var(--line); }
+.qr-text { display: grid; gap: 6px; justify-items: start; }
+.qr-text p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
+.done-open { font-size: .98rem; }
+.done-code { margin: 0; font-family: var(--serif); font-size: 2.6rem; font-weight: 600; letter-spacing: .3em; padding-left: .3em; color: var(--rose); line-height: 1; }
+.done-box .done-code-note { color: var(--ink-soft); font-size: .95rem; }
+@media (max-width: 420px) { .qr-row { flex-direction: column; text-align: center; } .qr-text { justify-items: center; } }
+
+/* his letters: a label for each letter's state */
+.state-chip {
+  display: inline-block; margin-bottom: 2px; padding: .15em .8em; border-radius: 999px; font-size: .84rem; font-weight: 600; line-height: 1.5;
+  background: var(--blush); color: var(--rose-deep); box-shadow: inset 0 0 0 1px var(--line);
+}
+.letter-row[data-state="unpaid"] { border-left-color: var(--gold); }
+.letter-row[data-state="unpaid"] .state-chip { background: #FBF0D9; color: #6B4A0E; box-shadow: inset 0 0 0 1px rgba(196, 145, 47, .45); }
+.letter-row[data-state="opened"] .state-chip, .letter-row[data-state="letterOnly"] .state-chip { background: var(--sage-wash); color: #33502D; box-shadow: inset 0 0 0 1px rgba(110, 150, 100, .45); }
+.letter-row[data-state="waiting"] .state-chip { background: var(--blue-wash); color: #2F4A6B; box-shadow: inset 0 0 0 1px rgba(143, 169, 198, .6); }
+.letter-row:is([data-state="yes"], [data-state="dish"]) .state-chip { background: var(--rose); color: var(--ivory); box-shadow: none; }
+.letter-row[data-state="locked"] { border-left-color: var(--berry); }
+.letter-row[data-state="locked"] .state-chip { background: #FFF1F3; color: var(--berry); box-shadow: inset 0 0 0 1px var(--berry); }
+
 .pay-box { display: grid; justify-items: center; gap: 12px; width: min(100%, 560px); padding: 30px 22px 26px; }
 .pay-box h2 { margin: 0; font-family: var(--hand); font-weight: 400; font-size: 1.9rem; line-height: 1.2; }
 .pay-box p { margin: 0; color: var(--ink-soft); }
@@ -482,7 +517,7 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
 .env-caption .script { display: block; font-size: 4.2rem; color: var(--rose); line-height: 1.1; }
 #s-envelope .env-caption, #s-envelope .open-hint { transition: opacity .4s; }
 #s-envelope:has(.is-open) .env-caption, #s-envelope:has(.is-open) .open-hint { opacity: 0; }
-.nums, .pay-box .btn, .pin input, .cal-day, .time, .code-note b, .inv-when, .date-summary p, .lr-meta, .lr-status { font-variant-numeric: lining-nums tabular-nums; }
+.nums, .pay-box .btn, .pin input, .cal-day, .time, .done-code, .inv-when, .date-summary p, .lr-meta, .lr-status { font-variant-numeric: lining-nums tabular-nums; }
 .open-hint { margin: 18px 0 0; color: var(--ink-soft); font-style: italic; text-align: center; }
 
 .letter { width: 100%; }
@@ -869,6 +904,90 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
 .env-stage.mode-mist.is-clear::after { opacity: 0; }
 .env-stage.mode-mist ~ .open-hint { margin-top: 18px; }
 
+/* ---------- her envelope in 3D (girl.js setupTilt): it leans toward her finger and sways a little on its own ----------
+   Only .env-body (the paper, flap and seal) and the ribbon tied round it move. The bouquets on .envelope, Kaptar and
+   the misty glass stay still: their SVG filters are costly to redraw on a moving frame.
+   --tx / --ty = her finger (degrees, set on #envStage), --sx / --sy = the idle sway. They are registered in girl.js
+   (CSS.registerProperty) so they can animate; without that, or with less motion asked for, nothing here runs. */
+.env-body { position: absolute; inset: 0; }
+#envStage .envelope { perspective: none; isolation: isolate; }   /* the flap's depth now comes from .env-body */
+#envStage .env-body { perspective: 1400px; }
+.env-stage.can-tilt { touch-action: pan-y pinch-zoom; transition: --tx .7s cubic-bezier(.2, .8, .3, 1), --ty .7s cubic-bezier(.2, .8, .3, 1); }
+.env-stage.can-tilt.is-tilting { transition-duration: .18s; transition-timing-function: linear; }
+.env-stage.can-tilt :is(.env-body, .ribbon) {
+  transform: perspective(900px) rotateX(calc((var(--tx) + var(--sx)) * 1deg)) rotateY(calc((var(--ty) + var(--sy)) * 1deg));
+  will-change: transform;
+  animation: env-sway 9s ease-in-out 8;   /* about a minute, then it rests (cheap phones) */
+}
+.env-stage.can-tilt.is-still :is(.env-body, .ribbon) { animation-play-state: paused; }
+@keyframes env-sway {   /* a slow wander, never more than 2.5°; starts and ends flat, so it never jumps */
+  0%, 100% { --sx: 0; --sy: 0; }
+  22% { --sx: 1.5; --sy: 2.2; }
+  50% { --sx: -1.2; --sy: .4; }
+  78% { --sx: 1; --sy: -2.2; }
+}
+/* a soft light on the paper that slides the other way as it leans (moved, never repainted) */
+.env-sheen { position: absolute; inset: 0; z-index: 3; overflow: hidden; border-radius: 2px; pointer-events: none; opacity: 0; transition: opacity .4s; }
+.env-sheen::before {
+  content: ""; position: absolute; left: -50%; top: -50%; width: 200%; height: 200%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0) 70%) 50% 50% / 60% 60% no-repeat;
+  transform: translate(calc(var(--ty, 0) * -2.2%), calc(var(--tx, 0) * 2.2%));
+}
+.env-stage.can-tilt .env-sheen { opacity: 1; }
+.envelope.is-open .env-sheen { opacity: 0; }
+
+/* ---------- the letter unfolds (girl.js unfoldLetter): a blank folded sheet of a fixed size opens, then the words come ----------
+   .is-unfolding: only the sheet shows (the paper and the words wait). .is-revealing: the real paper grows down from the
+   sheet and the words fade in, one part after the other. */
+.fold { display: none; }
+#s-letter .letter.is-unfolding { animation: none; background: none; box-shadow: none; outline-color: transparent; }
+.letter.is-unfolding::before, .letter.is-unfolding::after, .letter.is-unfolding > :not(.fold) { opacity: 0; }
+.letter.is-unfolding .fold {
+  display: block; position: absolute; left: 0; right: 0; top: 0; height: var(--sheet-h, 420px);
+  perspective: 1700px; animation: fold-arrive .5s cubic-bezier(.2, .8, .3, 1) both;
+}
+.fold > i { position: absolute; left: 0; right: 0; height: calc(100% / 3 + 1px); background: var(--ivory); }
+.fold > i::before {   /* the gold hairline frame of the paper, in three parts */
+  content: ""; position: absolute; inset: 0 9px; border: 0 solid var(--gold-soft); border-inline-width: 1px;
+}
+.fold > i::after {   /* the crease shadow: deep while folded, gone when flat */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(rgba(110, 45, 60, .11), rgba(110, 45, 60, .03));
+  animation: crease-light .5s both;
+}
+.fold > .fold-mid { top: calc(100% / 3); box-shadow: var(--shadow-paper); }
+.fold > .fold-mid::after { display: none; }
+.fold > .fold-top { top: 0; border-radius: 10px 10px 0 0; transform-origin: 50% 100%; animation: fold-top .55s .4s cubic-bezier(.45, 0, .2, 1) both; }
+.fold > .fold-top::before { top: 9px; border-top-width: 1px; border-radius: 1px 1px 0 0; }
+.fold > .fold-bottom { bottom: 0; border-radius: 0 0 10px 10px; transform-origin: 50% 0; animation: fold-bottom .55s .72s cubic-bezier(.45, 0, .2, 1) both; }
+.fold > .fold-bottom::before { bottom: 9px; border-bottom-width: 1px; border-radius: 0 0 1px 1px; }
+.fold > .fold-top::after { animation-delay: .4s; }
+.fold > .fold-bottom::after { animation-delay: .72s; }
+@keyframes fold-arrive { from { opacity: 0; transform: translateY(46px) scale(.9) rotate(-2deg); } }
+@keyframes fold-top { from { transform: rotateX(-180deg); } }
+@keyframes fold-bottom { from { transform: rotateX(180deg); } }
+@keyframes crease-light { from { opacity: 1; } to { opacity: 0; } }
+#s-letter .letter.is-revealing { animation: paper-grow .75s cubic-bezier(.3, .7, .2, 1) both; }
+@keyframes paper-grow {
+  from { clip-path: inset(-40px -40px calc(100% - var(--sheet-h, 420px)) -40px round 10px); }
+  to { clip-path: inset(-40px -40px -40px -40px round 10px); }
+}
+.letter.is-revealing::before, .letter.is-revealing::after { animation: garland-in .8s .3s both; }   /* opacity only: they keep their mirroring transform */
+@keyframes garland-in { from { opacity: 0; } }
+.letter.is-revealing > :not(.fold) { animation: ink-in .9s calc(.1s + var(--k, 0) * .22s) ease-out both; }
+.letter.is-revealing > #lBody { --k: 1; }
+.letter.is-revealing > :is(#lNote, #lClosing) { --k: 2; }
+.letter.is-revealing > #lSign { --k: 3; }
+@keyframes ink-in { from { opacity: 0; transform: translateY(6px); } }
+/* the photos and the Next button wait until the words are there */
+#s-letter.unfold .memory { animation-delay: calc(1.5s + var(--i, 0) * .4s); }
+#s-letter.unfold .memory::after { animation-delay: calc(2.1s + var(--i, 0) * .4s); }
+#s-letter.unfold > :is(#toDishes, .letter-end) { animation: ink-in .6s 2s both, no-press 2s both; }   /* not pressable while unseen */
+@keyframes no-press { 0%, 99% { visibility: hidden; } 100% { visibility: visible; } }
+@media (prefers-reduced-motion: reduce) {
+  .env-stage :is(.env-body, .ribbon) { animation: none !important; transform: none !important; }
+  .env-sheen, .fold { display: none !important; }
+}
+
 /* ---------- themes: her page background after the letter opens (girl.js applyTheme) + his phone preview ----------
    classic = the page above. Decorations are background layers on the themed element itself, so the same rule
    paints her whole page (body) and the small preview. */
@@ -907,7 +1026,7 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat;
 }
 /* light paper, buttons and seals keep their dark ink in the night theme */
-.theme-night :is(.paper, .sheet, .invitation, .stamp-wrap, .lang-switch, .memory, .lightbox, .picture-sheet, .btn, .seal, .pin) {
+.theme-night :is(.paper, .sheet, .invitation, .stamp-wrap, .lang-switch, .memory, .lightbox, .picture-sheet, .btn, .seal, .pin, .pv-stamp) {
   --claret: #4B1727; --ink-soft: #7A4D59; --rose: #A8394F; --rose-hi: #BC4A61; --rose-deep: #7E2538; --berry: #B3173F;
   --line: #E6C5C4; --gold-soft: rgba(196, 145, 47, .5);
 }
@@ -950,10 +1069,8 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
 /* the fixed bouquet wallpaper belongs to classic, garden and night; atlas and blossom have their own */
 body.theme-atlas::before, body.theme-atlas::after, body.theme-blossom::before, body.theme-blossom::after { display: none; }
 
-/* his side: theme choices + a phone-sized preview of her page */
-.theme-pick { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start; }
-@media (max-width: 640px) { .theme-pick { grid-template-columns: 1fr; justify-items: center; } }
-.theme-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; align-content: start; }
+/* his side: theme choices (her phone preview shows them) */
+.theme-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; width: 100%; align-content: start; }
 @media (max-width: 380px) { .theme-list { grid-template-columns: 1fr; } }
 .theme-choice { position: relative; display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; cursor: pointer; border: 1.5px solid var(--line); border-radius: 14px; background: #FFFEFB; }
 .theme-choice input { position: absolute; opacity: 0; pointer-events: none; }
@@ -961,19 +1078,165 @@ body.theme-atlas::before, body.theme-atlas::after, body.theme-blossom::before, b
 .theme-choice:has(input:focus-visible) { outline: 3px solid var(--rose); outline-offset: 2px; }
 .theme-choice b { font-size: 1rem; font-weight: 600; line-height: 1.3; }
 .theme-swatch { flex: none; width: 46px; height: 46px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(75, 23, 39, .12); }
-.phone { flex: none; padding: 9px; border-radius: 34px; background: linear-gradient(160deg, #4A2C38, #24151C); box-shadow: 0 18px 30px -14px rgba(60, 20, 35, .6), inset 0 0 0 1.5px rgba(255, 255, 255, .12); }
-.phone-view { width: 168px; height: 362px; overflow: hidden; border-radius: 26px; }
+
+/* ---------- his five-step form ---------- */
+/* The step bar is a post route: a gold dashed line with a stop for every step; the current stop is a small wax seal. */
+.stepbar { margin: 26px 0 0; }
+.stepbar ol { position: relative; display: flex; justify-content: space-between; margin: 0; padding: 0; list-style: none; }
+.stepbar ol::before {   /* the route between the first and the last stop */
+  content: ""; position: absolute; left: 18px; right: 18px; top: 17px; border-top: 1.5px dashed var(--gold);
+}
+.stepbar li { position: relative; flex: 1; display: flex; justify-content: center; }
+.stepbar li:first-child { justify-content: flex-start; }
+.stepbar li:last-child { justify-content: flex-end; }
+.stepbar button {
+  display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--ink-soft); font-size: .92rem; font-weight: 600; line-height: 1.2; text-align: center;
+}
+.stepbar li:first-child button { justify-items: start; text-align: start; }
+.stepbar li:last-child button { justify-items: end; text-align: end; }
+.stepbar button:disabled { cursor: default; }
+.sb-dot {
+  position: relative; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--ivory); box-shadow: inset 0 0 0 1.5px var(--line); color: var(--ink-soft);
+  font-variant-numeric: lining-nums; transition: background-color .25s, box-shadow .25s, transform .25s;
+}
+.stepbar .is-done .sb-dot { background: var(--blush); box-shadow: inset 0 0 0 1.5px var(--rose); color: var(--rose-deep); }
+.stepbar .is-done button:hover .sb-dot { background: var(--blush-2); }
+.stepbar .is-now .sb-dot {   /* the same wax as the seal on her envelope */
+  border-radius: 48% 52% 51% 49% / 52% 47% 53% 48%; color: #FBDDD6; transform: rotate(-6deg);
+  background: radial-gradient(circle at 34% 28%, #D2606F 0%, #A93049 46%, #6F1B2D 100%);
+  box-shadow: 0 0 0 2px #8A2236, 0 0 0 3.5px rgba(232, 193, 120, .75), 0 6px 10px -4px rgba(60, 10, 25, .55);
+}
+.stepbar .is-now button { color: var(--rose); }
+.stepbar .is-done button { color: var(--claret); }
+.sb-name { max-width: 9em; }
+
+.step-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 26px 0 0; padding-bottom: 6px; }
+.step-count { margin: 0; color: var(--ink-soft); font-size: .9rem; font-weight: 600; }
+.step-title { margin: 0; font-family: var(--script); font-weight: 400; font-size: clamp(2.5rem, 7vw, 3.1rem); line-height: 1.1; color: var(--rose); }
+.step-title:focus { outline: none; }
+.step-title:focus-visible { outline: 3px solid var(--rose); }
+.pv-open { flex: none; gap: 8px; }
+.pv-open svg { width: 20px; height: 20px; }
+
+.step-body { display: grid; gap: 0 44px; }
+.step-main { min-width: 0; container-type: inline-size; }
+@container (max-width: 640px) { .choices.three { grid-template-columns: 1fr; } }
+@container (max-width: 600px) { .dish-grid { grid-template-columns: 1fr; } }
+.step > .part:first-child { border-top: 0; padding-top: 18px; }
+
+/* Back / Next (Seal on the last step) */
+.step-nav { display: flex; align-items: center; gap: 12px; padding: 24px 0 0; border-top: 1px solid var(--line); }
+.step-nav .btn { min-width: 150px; }
+#nextBtn, #doneBtn { margin-inline-start: auto; }
+#doneBtn { min-width: 220px; font-size: 1.15rem; }
+.submit-row { display: grid; gap: 10px; justify-items: center; padding-top: 14px; }
+.form-error { margin: 0 0 14px; text-align: center; }
+.form-error:empty { min-height: 0; margin: 0; }
+
+/* step 5: everything at a glance */
+.summary { display: grid; gap: 14px; }
+.sum-group { padding: 16px 20px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: #FFFEFB; }
+.sum-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.sum-head h3 { margin: 0; font-family: var(--hand); font-weight: 400; font-size: 1.6rem; line-height: 1.2; color: var(--claret); }
+.sum-head .link-btn { flex: none; font-size: .95rem; min-height: 44px; }
+.summary dl { display: grid; grid-template-columns: minmax(8em, max-content) 1fr; gap: 6px 18px; margin: 0; }
+.summary dl > div { display: contents; }
+.summary dt { color: var(--ink-soft); font-size: .95rem; }
+.summary dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.summary dd.is-empty { color: var(--ink-soft); font-weight: 500; }
+@media (max-width: 480px) {
+  .summary dl { grid-template-columns: 1fr; gap: 0; }
+  .summary dd { margin-bottom: 8px; }
+}
+
+/* her phone, beside the form on wide screens (sticky) and a pop-up on smaller ones */
+.pv-col { display: none; }
+.pv-inner { display: grid; justify-items: center; gap: 12px; }
+.pv-close { display: none; }
+.pv-cap { margin: 0; max-width: 200px; color: var(--ink-soft); font-size: .9rem; text-align: center; text-wrap: balance; }
+@media (min-width: 1000px) {
+  .steps-form { max-width: 980px; }
+  .step-body { grid-template-columns: minmax(0, 1fr) 190px; }
+  .pv-col { display: block; padding-top: 18px; }
+  .pv-inner { position: sticky; top: 20px; }
+  .pv-open { display: none; }
+}
+@media (max-width: 999px) {
+  .pv-col.is-open {
+    position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px;
+    background: rgba(48, 14, 26, .62); overscroll-behavior: contain; overflow-y: auto;
+    animation: pv-fade .2s ease-out;
+  }
+  .pv-col.is-open .pv-inner { position: relative; animation: pv-rise .28s cubic-bezier(.2, .7, .2, 1); }
+  .pv-col.is-open .phone { --pv-k: .72; }
+  .pv-col.is-open .pv-cap { color: var(--ivory); max-width: 260px; font-size: 1rem; }
+  .pv-col.is-open .pv-close {
+    display: grid; place-items: center; position: absolute; top: -6px; right: -54px; z-index: 2; width: 46px; height: 46px; padding: 0;
+    border: 0; border-radius: 50%; background: var(--ivory); color: var(--claret); cursor: pointer; box-shadow: var(--shadow-small);
+  }
+  .pv-close svg { width: 22px; height: 22px; }
+}
+@media (max-width: 999px) and (max-height: 700px) { .pv-col.is-open .phone { --pv-k: .6; } }
+@media (max-width: 420px) { .pv-col.is-open .pv-close { right: 0; top: -58px; } .pv-col.is-open .pv-inner { margin-top: 58px; } }
+@keyframes pv-fade { from { opacity: 0; } }
+@keyframes pv-rise { from { opacity: 0; transform: translateY(18px) scale(.97); } }
+
+.phone { --pv-k: .5; flex: none; padding: 9px; border-radius: 34px; background: linear-gradient(160deg, #4A2C38, #24151C); box-shadow: 0 18px 30px -14px rgba(60, 20, 35, .6), inset 0 0 0 1.5px rgba(255, 255, 255, .12); }
+.phone-view { width: calc(336px * var(--pv-k)); height: calc(724px * var(--pv-k)); overflow: hidden; border-radius: calc(52px * var(--pv-k)); }
 .phone-screen {
-  position: relative; width: 336px; height: 724px; transform: scale(.5); transform-origin: 0 0;
-  display: grid; align-content: center; justify-items: center; gap: 30px; padding: 40px 22px; text-align: center; color: var(--claret);
+  position: relative; width: 336px; height: 724px; transform: scale(var(--pv-k)); transform-origin: 0 0;
+  padding: 40px 22px; text-align: center; color: var(--claret);
   transition: background-color .3s;
 }
+.pv-scene { display: none; height: 100%; align-content: center; justify-items: center; gap: 26px; }
+.phone-screen[data-scene="code"] .pv-code, .phone-screen[data-scene="letter"] .pv-letter,
+.phone-screen[data-scene="dishes"] .pv-dishes, .phone-screen[data-scene="open"] .pv-open { display: grid; }
 .phone-screen .env-caption { margin: 0; }
 .phone-screen .envelope { width: 250px; }
+.pv-code { gap: 18px; }
+.pv-code .envelope { width: 200px; margin-bottom: 14px; }
+.pv-script { margin: 0; font-family: var(--script); font-size: 3.4rem; line-height: 1.05; color: var(--rose); }
+.pv-text { margin: 0; font-size: 1.15rem; }
+.pv-pin { gap: 12px; }
+.pv-pin span { width: 58px; height: 70px; border-radius: 14px; border: 1.5px solid var(--line); background: #FFFEFB; }
+.pv-letter { align-content: start; }
+.letter-preview.pv-paper {
+  width: 100%; max-height: 640px; overflow: hidden; padding: 30px 26px; text-align: start; border: 0; border-radius: 10px;
+  font-size: var(--letter-size, 1.3rem); background: var(--ivory);
+  -webkit-mask-image: linear-gradient(#000 80%, transparent); mask-image: linear-gradient(#000 80%, transparent);
+}
+.pv-paper::before, .pv-paper::after { display: none; }
+.pv-q { margin: 0; font-family: var(--hand); font-size: 2rem; line-height: 1.25; text-wrap: balance; }
+.pv-stamps { display: grid; gap: 16px; width: 230px; }
+.pv-stamp { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 14px; padding: 10px; border-radius: 6px; background: var(--ivory); color: #4B1727; text-align: start; box-shadow: 0 10px 18px -12px rgba(60, 20, 35, .6); }
+.pv-stamp:nth-child(2) { transform: rotate(1.2deg); }
+.pv-stamp:nth-child(odd) { transform: rotate(-1deg); }
+.pv-stamp img, .pv-stamp i { width: 96px; height: 96px; border-radius: 4px; object-fit: cover; background: var(--blush); }
+.pv-stamp b { font-family: var(--hand); font-weight: 400; font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
 .ps-card { width: 100%; padding: 26px 20px; display: grid; gap: 16px; }
 .ps-card p { margin: 0; font-family: var(--hand); font-size: 1.6rem; line-height: 1.25; }
 .ps-btns { display: flex; gap: 12px; justify-content: center; }
 .ps-btns .btn { min-width: 100px; pointer-events: none; }
+
+/* phones: the step bar shows only the stops (the current step's name is the title under it); Back/Next stay at hand */
+@media (max-width: 699px) {
+  .stepbar .sb-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .sb-dot { width: 30px; height: 30px; font-size: .9rem; }
+  .stepbar ol::before { top: 14px; }
+  .stepbar button { min-width: 44px; min-height: 44px; align-content: center; }
+  .step-nav {
+    position: sticky; bottom: 0; z-index: 5; margin: 0 calc(-1 * var(--sheet-pad)); padding: 12px var(--sheet-pad) max(12px, env(safe-area-inset-bottom));
+    background: rgba(255, 250, 244, .96); border-top: 1px solid var(--line); box-shadow: 0 -10px 18px -14px rgba(110, 45, 60, .45);
+  }
+  .step-nav .btn { min-width: 0; flex: 1; }
+  #doneBtn { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pv-col.is-open, .pv-col.is-open .pv-inner { animation: none; }
+  .sb-dot { transition: none; }
+}
 
 /* ---------- footer under every page ---------- */
 /* Short pages: the body becomes a column so the footer is pushed to the bottom of the screen. */

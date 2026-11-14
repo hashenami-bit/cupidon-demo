@@ -15,3 +15,11 @@ SHA-256 of Google's original files (to check a fresh download is the same):
 Updating (Dependabot can't do this): download the three files of the new version into a NEW folder
 `firebase-<version>/`, make the same two changes, change `SDK` in `public/js/store.js`, test sign-in, letter list
 and delete in the browser, then remove the old folder.
+
+`qrcode-generator-2.0.4/qrcode.js` = QR Code Generator 2.0.4 by Kazuhiko Arase (MIT licence, see the top of the file),
+the file `dist/qrcode.mjs` of the npm package `qrcode-generator@2.0.4`, downloaded 2026-11-14. Content unchanged; only
+renamed to `.js` (serve.mjs and hosts serve `.js` as JavaScript; an unknown `.mjs` type would stop the module loading).
+Used only by his "sealed" screen (`public/js/qr.js` draws it on a canvas); it makes no network calls and touches no page.
+SHA-256: ea91d7118a5395289170da848b7c6758b996163bfbccf312591ab65a4911b7c0
+Updating: `npm pack qrcode-generator@<version>` in an empty folder, copy `dist/qrcode.mjs` as `qrcode.js` into a NEW folder
+`qrcode-generator-<version>/`, change the import in `public/js/qr.js`, check the QR still scans, remove the old folder.

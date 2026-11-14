@@ -65,11 +65,15 @@
     <!-- how she opens it (his choice): seal (default) | dove | ribbon | mist -->
     <div class="env-stage mode-seal" id="envStage">
       <div class="envelope" id="envelope">
-        <div class="env-back airmail"><i></i></div>
-        <div class="env-letter"></div>
-        <div class="env-pocket"><i></i></div>
-        <div class="env-flap"><i></i></div>
-        <button class="seal" id="sealBtn" type="button"><span data-t="pressMe">Press me</span></button>
+        <!-- env-body tilts under her finger (girl.js setupTilt); the bouquets on .envelope stay still -->
+        <div class="env-body">
+          <div class="env-back airmail"><i></i></div>
+          <div class="env-letter"></div>
+          <div class="env-pocket"><i></i></div>
+          <div class="env-flap"><i></i></div>
+          <div class="env-sheen" aria-hidden="true"></div>
+          <button class="seal" id="sealBtn" type="button"><span data-t="pressMe">Press me</span></button>
+        </div>
       </div>
       <div class="ribbon" id="ribbon" hidden>
         <span class="ribbon-band ribbon-v"></span><span class="ribbon-band ribbon-h"></span>
@@ -86,6 +90,8 @@
   <section class="screen" id="s-letter" tabindex="-1">
     <div class="memories" id="memories" hidden></div>
     <article class="letter paper">
+      <!-- a blank folded sheet that opens first (girl.js unfoldLetter), then the words fade in -->
+      <div class="fold" aria-hidden="true"><i class="fold-mid"></i><i class="fold-bottom"></i><i class="fold-top"></i></div>
       <h1 class="letter-greeting" id="lGreeting"></h1>
       <div id="lBody"></div>
       <p class="letter-ps" id="lNote" hidden></p>

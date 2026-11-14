@@ -49,6 +49,8 @@ export function linkParam(name, prefix, pattern) {
 }
 export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const wait = ms => new Promise(r => setTimeout(r, ms));
+// Only plain image data (our own resized photos) is ever shown: her pop-up photos, his draft.
+export const isImageData = p => typeof p === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p);
 // Browsers inside Telegram, Instagram, Facebook, Line and Android web views: downloads and Google sign-in often don't work there.
 export const inAppBrowser = () => /Telegram|Instagram|FBAN|FBAV|Line\/|; wv\)/i.test(navigator.userAgent);
 // Saves a file the plain way (a temporary download link).
@@ -115,6 +117,8 @@ export function pinInput(container, onComplete) {
   return {
     value, full,
     clear() { boxes.forEach(b => (b.value = '')); container.classList.remove('is-full'); boxes[0].focus(); },
+    // Puts saved digits back (his draft) without moving focus or calling onComplete.
+    set(v) { boxes.forEach((b, k) => (b.value = /^\d$/.test(v?.[k] || '') ? v[k] : '')); container.classList.toggle('is-full', full()); },
     focus() { boxes[0].focus(); },
     setDisabled(v) { boxes.forEach(b => (b.disabled = v)); }
   };

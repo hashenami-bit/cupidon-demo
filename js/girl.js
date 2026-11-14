@@ -6,11 +6,11 @@ import * as store from './store.js';
 import { deriveKey, decryptJSON, encryptJSON, answerKeyFrom, cryptoReady } from './crypto.js';
 import { FONTS, THEMES, OPENINGS, fontOf, renderLetter, renderOwn } from './letters.js';
 import { tr, dates, dayName, monthYear, guessLang, validLang, applyI18n, langSwitch, savedLang, saveLang } from './i18n.js';
-import { $, $$, pinInput, fmtDM, toISO, pad, parseISO, mapsUrl, isUrl, reducedMotion, wait, readInviteLink, downloadBlob, inAppBrowser, heartBurst } from './common.js';
+import { $, $$, pinInput, fmtDM, toISO, pad, parseISO, mapsUrl, isUrl, reducedMotion, wait, readInviteLink, inAppBrowser, heartBurst, isImageData } from './common.js';
 import { makeBanner, saveCanvas } from './banner.js';
 import { openPhotos } from './lightbox.js';
 import { kaptar, hand, bow } from './kaptar.js';
-import { startOf, countdownParts, icsFile, googleCalUrl } from './date-tools.js';
+import { startOf, countdownParts, saveIcs, googleCalUrl } from './date-tools.js';
 
 const { id, secret: linkSecret } = readInviteLink();   // the secret after the dot is part of her letter's key
 const UI_KEY = 'cupidon.ui.her';
@@ -72,6 +72,7 @@ function petals() {
 }
 
 function show(name) {
+  if (name !== 'letter') stopUnfold();
   $$('.screen').forEach(s => s.classList.toggle('is-active', s.id === 's-' + name));
   window.scrollTo(0, 0);
   $('#s-' + name).focus({ preventScroll: true });
@@ -145,9 +146,93 @@ let envOpened = false;
 async function openEnvelope() {
   if (envOpened) return;
   envOpened = true;
+  stopTilt();
   $('#envelope').classList.add('is-open');
   await wait(reducedMotion() ? 150 : 2000);
   show('letter');
+  unfoldLetter();
+}
+
+// The envelope leans toward her finger or mouse (up to TILT degrees) and sways a little by itself (CSS env-sway).
+// Only .env-body and the ribbon move; the mist, Kaptar and the bouquets stay still. No phone-motion sensor:
+// that needs a permission prompt on iPhones. Off when she asks for less motion or the browser can't animate
+// registered CSS properties (then the envelope just stays flat).
+const TILT = 9;
+let tiltFrame = 0, tiltAt = null;
+function canTilt() {
+  if (reducedMotion() || !window.CSS?.registerProperty) return false;
+  for (const name of ['--tx', '--ty', '--sx', '--sy']) {
+    try { CSS.registerProperty({ name, syntax: '<number>', inherits: name[2] === 't', initialValue: '0' }); }
+    catch (e) { if (e?.name !== 'InvalidModificationError') return false; }   // already registered = fine
+  }
+  return true;
+}
+function setupTilt() { $('#envStage').classList.toggle('can-tilt', canTilt()); }
+function tiltTo(e) {
+  const stage = $('#envStage');
+  if (envOpened || !stage.classList.contains('can-tilt')) return;
+  if (e.pointerType !== 'mouse' && e.type === 'pointermove' && !e.buttons) return;   // a finger only leans it while it touches
+  tiltAt = { x: e.clientX, y: e.clientY };
+  if (tiltFrame) return;
+  tiltFrame = requestAnimationFrame(() => {
+    tiltFrame = 0;
+    if (!tiltAt || envOpened) return;
+    const r = stage.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const clamp = v => Math.max(-1, Math.min(1, v));
+    const nx = clamp((tiltAt.x - r.left - r.width / 2) / (r.width / 2));
+    const ny = clamp((tiltAt.y - r.top - r.height / 2) / (r.height / 2));
+    stage.classList.add('is-tilting');
+    stage.style.setProperty('--tx', (-ny * TILT).toFixed(2));   // finger near the top: the top leans away
+    stage.style.setProperty('--ty', (nx * TILT).toFixed(2));
+  });
+}
+function tiltBack() {
+  tiltAt = null;
+  const stage = $('#envStage');
+  stage.classList.remove('is-tilting');   // the slow transition takes it back to flat
+  stage.style.setProperty('--tx', '0');
+  stage.style.setProperty('--ty', '0');
+}
+function stopTilt() {
+  cancelAnimationFrame(tiltFrame);
+  tiltFrame = 0;
+  tiltBack();
+  $('#envStage').classList.add('is-still');
+}
+{
+  const stage = $('#envStage');
+  stage.addEventListener('pointermove', tiltTo);
+  stage.addEventListener('pointerdown', tiltTo);
+  stage.addEventListener('pointerleave', tiltBack);
+  ['pointerup', 'pointercancel'].forEach(ev => stage.addEventListener(ev, e => { if (e.pointerType !== 'mouse') tiltBack(); }));
+}
+
+// ---------- 3. letter unfolds ----------
+// A blank sheet of a fixed size (as tall as the letter, at most most of the screen) opens from three folds,
+// then the real paper grows down from it and the words fade in. Only the first time, right after the envelope.
+const UNFOLD_MS = 1300, REVEAL_MS = 2400;
+let unfoldTimers = [];
+function unfoldLetter() {
+  if (reducedMotion()) return;
+  const screen = $('#s-letter'), paper = screen.querySelector('.letter');
+  stopUnfold();
+  const h = Math.round(Math.min(paper.offsetHeight, window.innerHeight * 0.62, 520));
+  if (h < 120) return;   // nothing sensible to fold
+  paper.style.setProperty('--sheet-h', h + 'px');
+  screen.classList.add('unfold');
+  paper.classList.add('is-unfolding');
+  unfoldTimers.push(setTimeout(() => {
+    paper.classList.replace('is-unfolding', 'is-revealing');
+    unfoldTimers.push(setTimeout(() => paper.classList.remove('is-revealing'), REVEAL_MS));
+  }, UNFOLD_MS));
+}
+function stopUnfold() {
+  unfoldTimers.forEach(clearTimeout);
+  unfoldTimers = [];
+  const screen = $('#s-letter');
+  screen.classList.remove('unfold');
+  screen.querySelector('.letter').classList.remove('is-unfolding', 'is-revealing');
 }
 function setupOpening() {
   const mode = OPENINGS.includes(c.opening) ? c.opening : 'seal';
@@ -169,6 +254,7 @@ function setupOpening() {
   $('#mistSkip').hidden = mode !== 'mist';
   if (mode === 'ribbon') $('#ribbonBtn').innerHTML = bow();
   if (mode === 'dove') $('#doveBtn').innerHTML = `<span class="kaptar">${kaptar('fly')}</span>`;
+  setupTilt();
 }
 // The opening screen is shown now: the mist has to be painted at its real size.
 function startOpening() { if (c.opening === 'mist') paintMist(); }
@@ -289,15 +375,14 @@ function fillLetter() {
   $('#letterEnd').hidden = !readOnly;
   $('#letterEnd').textContent = t('readEnd', { from: c.from });
 }
-const safePhoto = p => (typeof p === 'string' && IMG_DATA.test(p) ? p : '');   // only plain image data is ever shown
+const safePhoto = p => (isImageData(p) ? p : '');   // only plain image data is ever shown
 const viewerLabels = () => ({ close: t('close'), prev: t('photoPrev'), next: t('photoNext') });
 
 // His photos pop up above the letter when she opens it (only plain image data is accepted).
-const IMG_DATA = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 function buildMemories() {
   const box = $('#memories');
   box.innerHTML = '';
-  const list = (Array.isArray(c.photos) ? c.photos : []).filter(p => typeof p === 'string' && IMG_DATA.test(p)).slice(0, 3);
+  const list = (Array.isArray(c.photos) ? c.photos : []).filter(isImageData).slice(0, 3);
   box.hidden = !list.length;
   box.dataset.n = list.length;
   list.forEach((src, i) => {
@@ -734,7 +819,7 @@ $('#secretOpen').addEventListener('click', async () => {
 
 $('#calFile').addEventListener('click', () => {
   let ok = true;
-  try { downloadBlob(new Blob([icsFile(calEvent())], { type: 'text/calendar;charset=utf-8' }), `maktubim-${answer.date}.ics`); }
+  try { saveIcs(calEvent(), `maktubim-${answer.date}.ics`); }
   catch { ok = false; }
   // Inside Telegram or Instagram the download usually does nothing and says nothing: point her to the other ways.
   if (!ok || inAppBrowser()) $('#finalNote').textContent = t('calFileFail');

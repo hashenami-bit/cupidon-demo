@@ -139,163 +139,249 @@
     <p class="error" id="homeError" role="alert"></p>
     <ul class="letters" id="letters"></ul>
     <div class="empty" id="lettersEmpty" hidden>
+      <div class="kaptar empty-dove" data-kaptar="wait"></div>
       <p data-t="empty"></p>
       <a class="btn" href="#new" data-t="writeLetter"></a>
     </div>
   </section>
 
-  <!-- Write a letter -->
+  <!-- Write a letter: five steps (1 For her, 2 Letter, 3 The date, 4 Look, 5 Send). Only one step shows at a time. -->
   <section class="view" id="view-create" hidden>
-    <form class="sheet" id="createForm" novalidate>
+    <form class="sheet steps-form" id="createForm" novalidate>
       <h1 class="sheet-title" data-t="sheetTitle"></h1>
       <p class="sheet-lead" data-t="sheetLead"></p>
+      <p class="draft-note" id="draftNote" role="status" data-t="draftBack" hidden></p>
 
-      <div class="part">
-        <h2 data-t="letterLangT"></h2>
-        <p class="help" data-t="letterLangH"></p>
-        <div class="chips" id="langs" role="radiogroup" data-t-label="letterLangT"></div>
-      </div>
-
-      <div class="part">
-        <h2 data-t="whoT"></h2>
-        <p class="help" data-t="whoH"></p>
-        <div class="fields">
-          <label class="field"><span><span data-t="herName"></span></span>
-            <input class="input" id="girlName" maxlength="30" autocomplete="off" placeholder="X">
-            <p class="field-error" data-err="girlName"></p>
-          </label>
-          <label class="field"><span><span data-t="yourName"></span> <small data-t="yourNameNote"></small></span>
-            <input class="input" id="fromName" maxlength="30" autocomplete="given-name" placeholder="Y">
-            <p class="field-error" data-err="fromName"></p>
-          </label>
+      <nav class="stepbar" id="stepbar" data-t-label="stepsNav">
+        <ol>
+          <li data-step="1"><button type="button" data-go="1"><span class="sb-dot" aria-hidden="true">1</span><span class="sb-name" data-t="st1"></span></button></li>
+          <li data-step="2"><button type="button" data-go="2"><span class="sb-dot" aria-hidden="true">2</span><span class="sb-name" data-t="st2"></span></button></li>
+          <li data-step="3"><button type="button" data-go="3"><span class="sb-dot" aria-hidden="true">3</span><span class="sb-name" data-t="st3"></span></button></li>
+          <li data-step="4"><button type="button" data-go="4"><span class="sb-dot" aria-hidden="true">4</span><span class="sb-name" data-t="st4"></span></button></li>
+          <li data-step="5"><button type="button" data-go="5"><span class="sb-dot" aria-hidden="true">5</span><span class="sb-name" data-t="st5"></span></button></li>
+        </ol>
+      </nav>
+      <div class="step-head">
+        <div>
+          <p class="step-count" id="stepCount"></p>
+          <h2 class="step-title" id="stepTitle" tabindex="-1"></h2>
         </div>
+        <button class="btn btn-ghost btn-small pv-open" id="pvOpen" type="button" aria-controls="pvCol" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+          <span data-t="stepPreview"></span>
+        </button>
       </div>
 
-      <div class="part">
-        <h2 data-t="codeT"></h2>
-        <p class="help" data-t="codeH"></p>
-        <div class="fields">
-          <div class="field"><span id="pinLabel" data-t="code"></span>
-            <div class="pin" id="pin" role="group" aria-labelledby="pinLabel">
-              <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="1">
-              <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="2">
-              <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="3">
-              <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="4">
+      <div class="step-body">
+        <div class="step-main">
+
+          <!-- 1. For her -->
+          <section class="step" data-step="1">
+            <div class="part">
+              <h2 data-t="whoT"></h2>
+              <p class="help" data-t="whoH"></p>
+              <div class="fields">
+                <label class="field"><span><span data-t="herName"></span></span>
+                  <input class="input" id="girlName" maxlength="30" autocomplete="off" placeholder="X">
+                  <p class="field-error" data-err="girlName"></p>
+                </label>
+                <label class="field"><span><span data-t="yourName"></span> <small data-t="yourNameNote"></small></span>
+                  <input class="input" id="fromName" maxlength="30" autocomplete="given-name" placeholder="Y">
+                  <p class="field-error" data-err="fromName"></p>
+                </label>
+              </div>
             </div>
-            <p class="field-error" data-err="pin"></p>
-          </div>
-          <label class="field"><span><span data-t="hintL"></span> <small data-t="hintNote"></small></span>
-            <input class="input" id="hint" maxlength="60" autocomplete="off" data-t-ph="hintPh">
-          </label>
-        </div>
-      </div>
 
-      <div class="part">
-        <h2 data-t="openT"></h2>
-        <p class="help" data-t="openH"></p>
-        <div class="choices">
-          <label class="choice"><input type="radio" name="opening" value="seal" checked><b data-t="open_seal"></b><small data-t="open_sealNote"></small></label>
-          <label class="choice"><input type="radio" name="opening" value="dove"><b data-t="open_dove"></b><small data-t="open_doveNote"></small></label>
-          <label class="choice"><input type="radio" name="opening" value="ribbon"><b data-t="open_ribbon"></b><small data-t="open_ribbonNote"></small></label>
-          <label class="choice"><input type="radio" name="opening" value="mist"><b data-t="open_mist"></b><small data-t="open_mistNote"></small></label>
-        </div>
-      </div>
-
-      <div class="part">
-        <h2 data-t="themeT"></h2>
-        <p class="help" data-t="themeH"></p>
-        <div class="theme-pick">
-          <div class="theme-list" role="radiogroup" aria-label="Background" data-t-label="themeT">
-            <label class="theme-choice"><input type="radio" name="theme" value="classic" checked><span class="theme-swatch theme-classic" aria-hidden="true"></span><b data-t="theme_classic"></b></label>
-            <label class="theme-choice"><input type="radio" name="theme" value="garden"><span class="theme-swatch theme-garden" aria-hidden="true"></span><b data-t="theme_garden"></b></label>
-            <label class="theme-choice"><input type="radio" name="theme" value="night"><span class="theme-swatch theme-night" aria-hidden="true"></span><b data-t="theme_night"></b></label>
-            <label class="theme-choice"><input type="radio" name="theme" value="atlas"><span class="theme-swatch theme-atlas" aria-hidden="true"></span><b data-t="theme_atlas"></b></label>
-            <label class="theme-choice"><input type="radio" name="theme" value="blossom"><span class="theme-swatch theme-blossom" aria-hidden="true"></span><b data-t="theme_blossom"></b></label>
-          </div>
-          <div class="phone" aria-hidden="true">
-            <div class="phone-view">
-              <div class="phone-screen theme-classic" id="phoneScreen">
-                <p class="env-caption"><span data-t="pvTo"></span><span class="script" id="pvName"></span></p>
-                <div class="envelope">
-                  <div class="env-back airmail"><i></i></div>
-                  <div class="env-letter"></div>
-                  <div class="env-pocket"><i></i></div>
-                  <div class="env-flap"><i></i></div>
-                  <span class="seal seal-static"><span>♥</span></span>
+            <div class="part">
+              <h2 data-t="codeT"></h2>
+              <p class="help" data-t="codeH"></p>
+              <div class="fields">
+                <div class="field"><span id="pinLabel" data-t="code"></span>
+                  <div class="pin" id="pin" role="group" aria-labelledby="pinLabel">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="1">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="2">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="3">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="4">
+                  </div>
+                  <p class="field-error" data-err="pin"></p>
                 </div>
-                <div class="paper ps-card">
-                  <p data-t="pvQ"></p>
-                  <div class="ps-btns"><span class="btn btn-small" data-t="pvYes"></span><span class="btn btn-ghost btn-small" data-t="pvNo"></span></div>
+                <label class="field"><span><span data-t="hintL"></span> <small data-t="hintNote"></small></span>
+                  <input class="input" id="hint" maxlength="60" autocomplete="off" data-t-ph="hintPh">
+                </label>
+              </div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="letterLangT"></h2>
+              <p class="help" data-t="letterLangH"></p>
+              <div class="chips" id="langs" role="radiogroup" data-t-label="letterLangT"></div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="dateT"></h2>
+              <p class="help" data-t="dateH"></p>
+              <div class="choices three">
+                <label class="choice"><input type="radio" name="ask" value="full" checked><b data-t="dateYes"></b><small data-t="dateYesNote"></small></label>
+                <label class="choice"><input type="radio" name="ask" value="dish"><b data-t="dateNo"></b><small data-t="dateNoNote"></small></label>
+                <label class="choice"><input type="radio" name="ask" value="none"><b data-t="dateNone"></b><small data-t="dateNoneNote"></small></label>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. Letter -->
+          <section class="step" data-step="2" hidden>
+            <div class="part">
+              <h2 data-t="styleT"></h2>
+              <p class="help" data-t="styleH"></p>
+              <div class="chips" id="styles" role="radiogroup" data-t-label="styleT"></div>
+              <p class="sub-label" id="fontLabel" data-t="fontL"></p>
+              <div class="chips font-chips" id="fonts" role="radiogroup" aria-labelledby="fontLabel"></div>
+              <div class="own-box" id="ownBox" hidden>
+                <label class="field"><span data-t="ownL"></span>
+                  <textarea class="input" id="own" rows="9" data-t-ph="ownPh"></textarea>
+                </label>
+                <p class="own-meta"><small data-t="ownH"></small></p>
+                <p class="field-error" data-err="own"></p>
+              </div>
+              <div class="letter-preview" id="preview"></div>
+              <label class="field field-note"><span><span data-t="noteL"></span> <small data-t="noteNote"></small></span>
+                <textarea class="input" id="note" maxlength="400" data-t-ph="notePh"></textarea>
+              </label>
+            </div>
+
+            <div class="part">
+              <h2 data-t="photosT"></h2>
+              <p class="help" data-t="photosH"></p>
+              <label class="switch"><input type="checkbox" id="withPhotos"><span class="switch-box" aria-hidden="true"></span><span data-t="photosOn"></span></label>
+              <div class="dish-grid couple-grid" id="couple" hidden></div>
+              <p class="field-error" data-err="couple"></p>
+            </div>
+          </section>
+
+          <!-- 3. The date (skipped for "only the letter") -->
+          <section class="step" data-step="3" hidden>
+            <div class="part" id="tripPart">
+              <h2 data-t="tripT"></h2>
+              <p class="help" data-t="tripH"></p>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="pickup" value="yes" checked><b data-t="pickupYes"></b><small data-t="pickupYesNote"></small></label>
+                <label class="choice"><input type="radio" name="pickup" value="no"><b data-t="pickupNo"></b><small data-t="pickupNoNote"></small></label>
+              </div>
+            </div>
+
+            <div class="part" id="dishesPart">
+              <h2 data-t="dishesT"></h2>
+              <p class="help" data-t="dishesH"></p>
+              <div class="dish-grid" id="dishes"></div>
+            </div>
+          </section>
+
+          <!-- 4. Look -->
+          <section class="step" data-step="4" hidden>
+            <div class="part">
+              <h2 data-t="openT"></h2>
+              <p class="help" data-t="openH"></p>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="opening" value="seal" checked><b data-t="open_seal"></b><small data-t="open_sealNote"></small></label>
+                <label class="choice"><input type="radio" name="opening" value="dove"><b data-t="open_dove"></b><small data-t="open_doveNote"></small></label>
+                <label class="choice"><input type="radio" name="opening" value="ribbon"><b data-t="open_ribbon"></b><small data-t="open_ribbonNote"></small></label>
+                <label class="choice"><input type="radio" name="opening" value="mist"><b data-t="open_mist"></b><small data-t="open_mistNote"></small></label>
+              </div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="themeT"></h2>
+              <p class="help" data-t="themeH"></p>
+              <div class="theme-list" role="radiogroup" aria-label="Background" data-t-label="themeT">
+                <label class="theme-choice"><input type="radio" name="theme" value="classic" checked><span class="theme-swatch theme-classic" aria-hidden="true"></span><b data-t="theme_classic"></b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="garden"><span class="theme-swatch theme-garden" aria-hidden="true"></span><b data-t="theme_garden"></b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="night"><span class="theme-swatch theme-night" aria-hidden="true"></span><b data-t="theme_night"></b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="atlas"><span class="theme-swatch theme-atlas" aria-hidden="true"></span><b data-t="theme_atlas"></b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="blossom"><span class="theme-swatch theme-blossom" aria-hidden="true"></span><b data-t="theme_blossom"></b></label>
+              </div>
+            </div>
+
+            <div class="part" id="secretPart">
+              <h2 id="secretT" data-t="secretT"></h2>
+              <p class="help" id="secretH" data-t="secretH"></p>
+              <textarea class="input" id="secret" maxlength="600" rows="3" aria-labelledby="secretT" aria-describedby="secretH" data-t-ph="secretPh"></textarea>
+              <button class="link-btn secret-idea" id="secretIdea" type="button" data-t="secretIdea"></button>
+            </div>
+          </section>
+
+          <!-- 5. Send: everything at a glance, then seal -->
+          <section class="step" data-step="5" hidden>
+            <div class="part">
+              <h2 data-t="sumT"></h2>
+              <p class="help" data-t="sumH"></p>
+              <div class="summary" id="summary"></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Her phone: follows the step (code screen, letter, dishes, envelope). Beside the form on wide screens, a pop-up on phones. -->
+        <aside class="pv-col" id="pvCol" data-t-label="stepPreview">
+          <div class="pv-inner">
+            <button class="pv-close" id="pvClose" type="button" data-t-label="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <div class="phone" aria-hidden="true">
+              <div class="phone-view">
+                <div class="phone-screen theme-classic" id="phoneScreen" data-scene="code">
+                  <div class="pv-scene pv-code">
+                    <div class="envelope">
+                      <div class="env-back airmail"><i></i></div>
+                      <div class="env-letter"></div>
+                      <div class="env-pocket"><i></i></div>
+                      <div class="env-flap"><i></i></div>
+                      <span class="seal seal-static"><span>♥</span></span>
+                    </div>
+                    <p class="pv-script" id="pvPinTitle"></p>
+                    <p class="pv-text" id="pvPinLabel"></p>
+                    <p class="hint pv-text" id="pvHint" hidden></p>
+                    <div class="pin pv-pin"><span></span><span></span><span></span><span></span></div>
+                  </div>
+                  <div class="pv-scene pv-letter">
+                    <div class="paper pv-paper letter-preview" id="pvLetter"></div>
+                  </div>
+                  <div class="pv-scene pv-dishes">
+                    <p class="pv-q" id="pvDishesQ"></p>
+                    <div class="pv-stamps" id="pvStamps"></div>
+                  </div>
+                  <div class="pv-scene pv-open">
+                    <p class="env-caption"><span data-t="pvTo"></span><span class="script" id="pvName"></span></p>
+                    <div class="envelope">
+                      <div class="env-back airmail"><i></i></div>
+                      <div class="env-letter"></div>
+                      <div class="env-pocket"><i></i></div>
+                      <div class="env-flap"><i></i></div>
+                      <span class="seal seal-static"><span>♥</span></span>
+                    </div>
+                    <div class="paper ps-card">
+                      <p data-t="pvQ"></p>
+                      <div class="ps-btns"><span class="btn btn-small" data-t="pvYes"></span><span class="btn btn-ghost btn-small" data-t="pvNo"></span></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+            <p class="pv-cap" id="pvCap"></p>
           </div>
-        </div>
+        </aside>
       </div>
 
-      <div class="part">
-        <h2 data-t="styleT"></h2>
-        <p class="help" data-t="styleH"></p>
-        <div class="chips" id="styles" role="radiogroup" data-t-label="styleT"></div>
-        <p class="sub-label" id="fontLabel" data-t="fontL"></p>
-        <div class="chips font-chips" id="fonts" role="radiogroup" aria-labelledby="fontLabel"></div>
-        <div class="own-box" id="ownBox" hidden>
-          <label class="field"><span data-t="ownL"></span>
-            <textarea class="input" id="own" rows="9" data-t-ph="ownPh"></textarea>
-          </label>
-          <p class="own-meta"><small data-t="ownH"></small></p>
-          <p class="field-error" data-err="own"></p>
-        </div>
-        <div class="letter-preview" id="preview"></div>
-        <label class="field field-note"><span><span data-t="noteL"></span> <small data-t="noteNote"></small></span>
-          <textarea class="input" id="note" maxlength="400" data-t-ph="notePh"></textarea>
-        </label>
+      <p class="error form-error" id="formError" role="alert"></p>
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="backBtn" type="button" data-t="stepBack"></button>
+        <button class="btn" id="nextBtn" type="button" data-t="stepNext"></button>
+        <button class="btn" id="doneBtn" type="submit" data-t="done" hidden></button>
       </div>
-
-      <div class="part">
-        <h2 data-t="dateT"></h2>
-        <p class="help" data-t="dateH"></p>
-        <div class="choices three">
-          <label class="choice"><input type="radio" name="ask" value="full" checked><b data-t="dateYes"></b><small data-t="dateYesNote"></small></label>
-          <label class="choice"><input type="radio" name="ask" value="dish"><b data-t="dateNo"></b><small data-t="dateNoNote"></small></label>
-          <label class="choice"><input type="radio" name="ask" value="none"><b data-t="dateNone"></b><small data-t="dateNoneNote"></small></label>
-        </div>
-      </div>
-
-      <div class="part" id="tripPart">
-        <h2 data-t="tripT"></h2>
-        <p class="help" data-t="tripH"></p>
-        <div class="choices">
-          <label class="choice"><input type="radio" name="pickup" value="yes" checked><b data-t="pickupYes"></b><small data-t="pickupYesNote"></small></label>
-          <label class="choice"><input type="radio" name="pickup" value="no"><b data-t="pickupNo"></b><small data-t="pickupNoNote"></small></label>
-        </div>
-      </div>
-
-      <div class="part" id="dishesPart">
-        <h2 data-t="dishesT"></h2>
-        <p class="help" data-t="dishesH"></p>
-        <div class="dish-grid" id="dishes"></div>
-      </div>
-
-      <div class="part">
-        <h2 data-t="photosT"></h2>
-        <p class="help" data-t="photosH"></p>
-        <label class="switch"><input type="checkbox" id="withPhotos"><span class="switch-box" aria-hidden="true"></span><span data-t="photosOn"></span></label>
-        <div class="dish-grid couple-grid" id="couple" hidden></div>
-        <p class="field-error" data-err="couple"></p>
-      </div>
-
-      <div class="part" id="secretPart">
-        <h2 id="secretT" data-t="secretT"></h2>
-        <p class="help" id="secretH" data-t="secretH"></p>
-        <textarea class="input" id="secret" maxlength="600" rows="3" aria-labelledby="secretT" aria-describedby="secretH" data-t-ph="secretPh"></textarea>
-        <button class="link-btn secret-idea" id="secretIdea" type="button" data-t="secretIdea"></button>
-      </div>
-
       <div class="submit-row">
-        <button class="btn" id="doneBtn" type="submit" data-t="done"></button>
-        <p class="error" id="formError" role="alert"></p>
-        <a class="link-btn link-cancel" href="#" data-t="cancel"></a>
+        <p class="draft-state" id="draftState" aria-live="polite" hidden></p>
+        <div class="submit-links">
+          <a class="link-btn link-cancel" href="#" data-t="cancel"></a>
+          <button class="link-btn link-cancel" id="startOver" type="button" data-t="startOver" hidden></button>
+        </div>
       </div>
     </form>
   </section>
@@ -324,22 +410,36 @@
         <button class="link-btn" id="checkPayBtn" type="button" data-t="checkAgain" hidden></button>
       </div>
 
+      <!-- Two things to give her: 1 the link (send it), 2 the code (say it) -->
       <div class="link-part" id="linkPart">
-      <p class="in-app-note" id="linkMissing" data-t="linkOtherDevice" hidden></p>
-      <div class="linkbox">
-        <label class="sr-only" for="doneLink" data-t="linkLabel"></label>
-        <input id="doneLink" readonly>
-        <button class="btn btn-small" id="copyBtn" type="button" data-t="copyLink"></button>
-      </div>
-      <div class="share-row">
-        <a class="btn btn-ghost btn-small" id="shareTg" target="_blank" rel="noopener">Telegram</a>
-        <a class="btn btn-ghost btn-small" id="shareWa" target="_blank" rel="noopener">WhatsApp</a>
-        <button class="btn btn-ghost btn-small" id="shareMore" type="button" data-t="more" hidden></button>
-      </div>
-      <div class="code-note"><span data-t="codeIs"></span> <b id="donePin"></b><br><span data-t="codeNote"></span></div>
-      <div class="share-row">
-        <a class="btn btn-ghost btn-small" id="doneOpen" data-t="openLikeHer"></a>
-      </div>
+        <p class="in-app-note" id="linkMissing" data-t="linkOtherDevice" hidden></p>
+        <p class="in-app-note" id="linkUnsaved" data-t="linkNotSaved" role="alert" hidden></p>
+        <section class="done-box" id="linkBox" aria-labelledby="doneSendT">
+          <h2 class="done-step"><span class="done-num" aria-hidden="true">1</span><span id="doneSendT" data-t="doneSendT"></span></h2>
+          <div class="linkbox">
+            <label class="sr-only" for="doneLink" data-t="linkLabel"></label>
+            <input id="doneLink" readonly>
+            <button class="btn btn-small" id="copyBtn" type="button" data-t="copyLink"></button>
+          </div>
+          <div class="share-row">
+            <a class="btn btn-ghost btn-small" id="shareTg" target="_blank" rel="noopener">Telegram</a>
+            <a class="btn btn-ghost btn-small" id="shareWa" target="_blank" rel="noopener">WhatsApp</a>
+            <button class="btn btn-ghost btn-small" id="shareMore" type="button" data-t="more" hidden></button>
+          </div>
+          <div class="qr-row">
+            <canvas class="qr" id="qrCanvas" role="img" data-t-label="qrLabel"></canvas>
+            <div class="qr-text">
+              <p data-t="qrNote"></p>
+              <button class="link-btn" id="qrSave" type="button" data-t="qrSave"></button>
+            </div>
+          </div>
+          <a class="link-btn done-open" id="doneOpen" data-t="openLikeHer"></a>
+        </section>
+        <section class="done-box" aria-labelledby="doneCodeT">
+          <h2 class="done-step"><span class="done-num" aria-hidden="true">2</span><span id="doneCodeT" data-t="doneCodeT"></span></h2>
+          <p class="done-code" id="donePin"></p>
+          <p class="done-code-note" data-t="codeNote"></p>
+        </section>
       </div>
       <a class="btn btn-ghost btn-small" href="#" data-t="backLetters"></a>
     </div>

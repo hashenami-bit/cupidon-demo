@@ -6,8 +6,12 @@ import { deriveKey, encryptJSON, decryptJSON, randomSalt, randomLinkSecret, newA
 import { LETTERS, FONTS, SECRET_IDEAS, THEMES, OPENINGS, renderLetter, renderOwn } from './letters.js';
 import { LANGS, tr, applyI18n, langSwitch, savedLang, saveLang, guessLang, dayName } from './i18n.js';
 import { compressImage, COUPLE_PHOTO } from './image.js';
+import { saveDraft, loadDraft, deleteDraft } from './draft.js';
 import { openPhotos } from './lightbox.js';
-import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, isUrl, isMapUrl, linkParam, inAppBrowser } from './common.js';
+import { kaptar } from './kaptar.js';
+import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, isUrl, isMapUrl, linkParam, inAppBrowser, wait, isImageData, downloadBlob } from './common.js';
+import { startOf, saveIcs } from './date-tools.js';
+import { drawQR, qrBlob } from './qr.js';
 
 const UI_KEY = 'cupidon.ui';
 let ui = savedLang(UI_KEY) || guessLang();
@@ -52,17 +56,23 @@ function closeLinks() { links = {}; linksUid = null; linksLock = null; linksOpen
 async function saveLinks() {
   if (!linksUid || !await mergeStored()) return false;
   try { localStorage.setItem('cupidon.links.' + linksUid, JSON.stringify(await encryptJSON(linksLock || await getLinksLock(), links))); return true; }
-  catch { return false; }   // no key, private mode or full: the caller keeps it the old way
+  catch { return false; }   // no key, private mode or full: the secret stays in memory only (never unlocked on disk)
 }
 const saveOld = old => { try { Object.keys(old).length ? localStorage.setItem(OLD_LINKS_KEY, JSON.stringify(old)) : localStorage.removeItem(OLD_LINKS_KEY); } catch { /* nothing to do */ } };
+// Secrets that could not be locked yet: kept in memory only, and he is asked to copy the link (security scan 2026-11-14:
+// a plain-text fallback in localStorage would hand the link to the next person on a shared computer).
+const unsavedLinks = new Set();
+// Returns true once the secret is locked on this device. Tries the account key three times (offline / busy server).
 async function keepLinkSecret(id, secret) {
   await linksReady;
-  if (secret) links[id] = secret; else delete links[id];
+  if (secret) { links[id] = secret; unsavedLinks.add(id); } else { delete links[id]; unsavedLinks.delete(id); }
   const old = readJSON(OLD_LINKS_KEY) || {};
-  if (await saveLinks()) { if (id in old) { delete old[id]; saveOld(old); } return; }
-  // No key right now (offline): keep it the old way so the link is never lost; it gets locked on the next list load.
-  if (secret) old[id] = secret; else delete old[id];
-  saveOld(old);
+  if (id in old) { delete old[id]; saveOld(old); }   // never left behind in the old unlocked store
+  for (const pause of [0, 1000, 3000]) {
+    if (pause) await wait(pause);
+    if (await saveLinks()) { unsavedLinks.clear(); return true; }   // everything in memory is locked now
+  }
+  return !secret;
 }
 // Moves his own letters' secrets out of the old unlocked store.
 async function adoptOldLinks(ids) {
@@ -71,6 +81,7 @@ async function adoptOldLinks(ids) {
   if (!mine.length) return;
   mine.forEach(id => { links[id] = old[id]; });
   if (!await saveLinks()) return;
+  unsavedLinks.clear();
   mine.forEach(id => { delete old[id]; });
   saveOld(old);
 }
@@ -82,6 +93,7 @@ const setPayError = key => { payErrKey = key; $('#payError').textContent = key ?
 const dishes = [{}, {}, {}];
 const couple = [null, null, null];   // optional photos for her (data URLs)
 
+$$('#lettersEmpty [data-kaptar]').forEach(el => (el.innerHTML = kaptar(el.dataset.kaptar)));   // Kaptar waits on the empty letters list
 if (store.DEMO) {
   $('#demoRibbon').hidden = false;
   $('#signInLabel').dataset.t = 'tryDemo';
@@ -98,6 +110,9 @@ function applyUi() {
   applyI18n(ui);
   updateRequired();
   refreshPreview();
+  stepBar();
+  refreshPhone();
+  if (step === 5) buildSummary();
   $$('.photo-drop').forEach(d => (d.dataset.busy = t('preparing')));
   $('#formError').textContent = formError ? t(formError.key, formError.vars) : '';
   $('#payError').textContent = payErrKey ? t(payErrKey) : '';
@@ -109,6 +124,7 @@ langSwitch($('#uiLang'), ui, lang => { ui = lang; saveLang(UI_KEY, lang); applyU
 
 // ---------- views ----------
 function showView(name) {
+  closePreview(false);
   $$('.view').forEach(v => (v.hidden = v.id !== 'view-' + name));
   window.scrollTo(0, 0);
 }
@@ -116,7 +132,7 @@ function showView(name) {
 function route() {
   if (user === undefined) return;
   if (!user) return showView('login');
-  if (location.hash === '#new') { showView('create'); refreshPreview(); return; }
+  if (location.hash === '#new') { showView('create'); enterForm(); refreshPreview(); restoreDraft(); return; }
   if (location.hash === '#sealed' && lastSealed) { showDone(); return; }
   showView('home');
   loadHome();
@@ -127,7 +143,10 @@ $('#signInBtn').addEventListener('click', async () => {
   try { await store.signIn(); }
   catch (e) { $('#signInError').textContent = t(e.code === 'auth/unauthorized-domain' ? 'signInDomain' : 'signInFail'); }
 });
-$('#signOutBtn').addEventListener('click', () => store.signOut());
+$('#signOutBtn').addEventListener('click', async () => {
+  if (draftTimer) await Promise.race([queueSave(), wait(1500)]);   // his last words are saved (locked) first, but offline never holds up sign-out
+  store.signOut();
+});
 
 // ---------- his letters ----------
 let homeRun = 0;
@@ -153,8 +172,40 @@ async function answerOf(id, m) {
   if (hit?.sig === sig) return hit.a;
   const key = m.answerKey ? await answerKeyFrom(m.answerKey) : await deriveKey(m.pin, m.salt);
   const a = await decryptJSON(key, m.answer);
+  if (!answerShapeOk(a)) throw new Error('bad-answer');   // shown as "unreadable"
   answers.set(id, { sig, a });
   return a;
+}
+// Her answer is locked by her page, but anyone with her link + code can lock anything: only a dish number and a
+// plain date/time (or none) are used here, so nothing odd reaches his calendar file (security scan 2026-11-14, F1).
+function answerShapeOk(a) {
+  if (!a || typeof a !== 'object' || !Number.isInteger(a.dish) || a.dish < 0 || a.dish > 2) return false;
+  if (a.date == null) return a.time == null;
+  return typeof a.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.date) && typeof a.time === 'string' && /^\d{2}:\d{2}$/.test(a.time);
+}
+
+// Each letter is in one of 8 states (a coloured label on its row), and has one main button for that state.
+// unpaid · notOpened · opened · waiting (old letters: no "opened" record) · yes (dish + day) · dish (dish, day together)
+// · letterOnly · locked
+function rowState(r, m, a) {
+  if (r.status !== 'active') return 'unpaid';
+  if (m.answer) return a && !a.date ? 'dish' : 'yes';
+  if (r.locked) return 'locked';   // before "letter only": a locked letter-only letter still needs its Unlock button
+  if (m.ask === 'none') return 'letterOnly';
+  if (typeof r.openedAt === 'number') return 'opened';
+  return r.openedAt === null ? 'notOpened' : 'waiting';
+}
+
+// "Add to calendar" for him: the same kind of .ics file she gets, made on his device.
+function hisCalendar(r, m, a) {
+  const d = (m.dishes || [])[a.dish] || {};
+  saveIcs({
+    uid: `${r.id}-${a.date}-his`,
+    title: t('himCalTitle', { name: m.girlName || '' }),
+    start: startOf(a.date, a.time),
+    place: d.place || '',
+    details: [d.name, d.location].filter(Boolean).join('\n')
+  }, `maktubim-${a.date}.ics`);
 }
 
 async function letterRow(r) {
@@ -170,37 +221,46 @@ async function letterRow(r) {
   actions.className = 'lr-actions';
   const link = linkFor(r.id, !!m.answerKey);
   let a = null;   // her unlocked answer
+  let first = null;   // the main button of this state (filled, the others are outlined)
 
-  if (r.status !== 'active') {
-    status.textContent = t('rowUnpaid');
-    const pay = btn(t('payAndSend'));
-    pay.classList.remove('btn-ghost');
-    pay.onclick = () => goPay(r.id, pay);
-    actions.append(pay);
-  } else if (m.answer && m.pin) {
+  if (m.answer && r.status === 'active') {
     try {
+      if (!m.pin && !m.answerKey) throw new Error('no-key');
       a = await answerOf(r.id, m);
       const d = (m.dishes || [])[a.dish] || {};
       const dishText = d.name || '#' + (a.dish + 1), where = d.place ? t('whereAt', { place: d.place }) : '';
       status.textContent = !a.date ? t('saidYesNoDate', { dish: dishText, where }) : t('saidYes', {
         dish: dishText, where, day: `${dayName(ui, parseISO(a.date))} ${fmtDM(a.date)}`, time: a.time
       });
-      li.classList.add('is-answered');
     } catch { status.textContent = t('unreadable'); }
-  } else if (r.locked) {   // checked before "letter only": a locked letter-only letter still needs its Unlock button
+  }
+  const state = rowState(r, m, a);
+  li.dataset.state = state;
+  if (state === 'yes' || state === 'dish') li.classList.add('is-answered');
+  const chip = Object.assign(document.createElement('span'), { className: 'state-chip', textContent: t('chip_' + state) });
+
+  if (state === 'unpaid') {
+    status.textContent = t('rowUnpaid');
+    first = btn(t('payAndSend'));
+    first.onclick = () => goPay(r.id, first);
+  } else if (state === 'yes' && a?.date && a.time) {
+    first = btn(t('himCal'));
+    first.onclick = () => { try { hisCalendar(r, m, a); } catch { toast(t('actionFail')); } };
+  } else if (state === 'locked') {
     status.textContent = t('rowLocked');
-    const unlock = btn(t('unlock'));
+    const unlock = first = btn(t('unlock'));
     unlock.onclick = async () => {
       unlock.disabled = true;
       try { await store.unlockLetter(r.id); toast(t('unlocked')); loadHome(); }
       catch { toast(t('actionFail')); unlock.disabled = false; }
     };
-    actions.append(unlock);
-  } else if (m.ask === 'none') {
+  } else if (state === 'letterOnly') {
     status.textContent = t('rowNoReply');
   }
-  main.append(name, meta, status);
-  const seen = seenParts(r, a).map(([key, vals]) => t(key, vals));
+  main.append(chip, name, meta, status);
+  if (state === 'waiting') status.hidden = true;   // the label already says it
+  const seen = seenParts(r, a).filter(([key]) => !(key === 'rowNotOpened' && state === 'notOpened'))   // the label says it
+    .map(([key, vals]) => t(key, vals));
   if (seen.length) main.append(Object.assign(document.createElement('p'), { className: 'lr-meta lr-seen', textContent: seen.join(' · ') }));
 
   if (r.status === 'active' && !link) {
@@ -209,8 +269,10 @@ async function letterRow(r) {
     const copy = btn(t('copyLink'));
     copy.onclick = async () => toast(t(await copyText(link) ? 'copied' : 'copyFail'));
     const open = Object.assign(document.createElement('a'), { className: 'btn btn-ghost btn-small', textContent: t('open'), href: link });
+    if (!first) first = copy;   // nothing else to do yet: sending the link again is the main thing
     actions.append(copy, open);
   }
+  if (first) { first.classList.remove('btn-ghost'); actions.prepend(first); }
   // Two taps to delete (pop-up confirm boxes don't work everywhere, e.g. inside apps).
   const del = btn(t('del'), 'btn-del');
   let armed = null;
@@ -232,6 +294,9 @@ async function letterRow(r) {
 
 // ---------- write a letter ----------
 const pin = pinInput($('#pin'));
+// The form has five steps: 1 For her, 2 Letter, 3 The date (skipped for "only the letter"), 4 Look, 5 Send.
+let step = 1;      // the step on screen
+let reached = 1;   // the furthest step he has opened (its stop on the step bar stays filled)
 
 // Radio "chips". Labels come either as plain text (label) or as a translation key (tKey).
 function radioChips(box, name, items, checkedId) {
@@ -282,6 +347,10 @@ function refreshPreview() {
   if (note) add('', 'P.S. ' + note);
   add('', L.closing);
   add('lp-sign', from);
+  const pv = $('#pvLetter');   // the same letter on her phone (step 2)
+  pv.lang = lang;
+  FONTS.forEach(f => pv.classList.toggle('font-' + f, f === fontId()));
+  pv.replaceChildren(...[...box.children].map(p => p.cloneNode(true)));
 }
 ['#girlName', '#fromName', '#note'].forEach(s => $(s).addEventListener('input', refreshPreview));
 let ownTimer;   // his own words have no length limit: redraw the preview when he pauses, not on every key
@@ -312,29 +381,36 @@ function bindPhotoDrop(drop, errKey, opts, onPhoto, onView) {
     try {
       const photo = await compressImage(f, opts?.maxSide, opts?.target);
       onPhoto(photo);
-      drop.classList.add('has-photo');
-      drop.removeAttribute('aria-invalid');
-      drop.querySelector('img')?.remove();
-      drop.querySelector('.change')?.remove();
-      const img = new Image(); img.alt = ''; img.src = photo;
-      const ch = document.createElement('span');
-      ch.className = 'change'; ch.dataset.t = 'changePhoto'; ch.textContent = t('changePhoto');
-      drop.querySelector('.ph-empty').hidden = true;
-      drop.append(img, ch);
-      const wrap = drop.parentElement;
-      if (onView && !wrap.querySelector('.photo-zoom')) {
-        const z = document.createElement('button');
-        z.type = 'button';
-        z.className = 'photo-zoom';
-        z.setAttribute('aria-label', t('photoZoom'));
-        z.innerHTML = ZOOM_ICON;
-        z.addEventListener('click', onView);
-        wrap.append(z);
-      }
+      showPhoto(drop, photo, onView);
+      refreshPhone();
+      scheduleDraft();
     } catch (e) { setErr(errKey, e.message === 'not-image' ? 'notImage' : 'badFormat'); }
     finally { drop.classList.remove('is-busy'); file.value = ''; }
   });
 }
+// Shows a photo in its box (just picked, or brought back from his draft).
+function showPhoto(drop, photo, onView) {
+  drop.classList.add('has-photo');
+  drop.removeAttribute('aria-invalid');
+  drop.querySelector('img')?.remove();
+  drop.querySelector('.change')?.remove();
+  const img = new Image(); img.alt = ''; img.src = photo;
+  const ch = document.createElement('span');
+  ch.className = 'change'; ch.dataset.t = 'changePhoto'; ch.textContent = t('changePhoto');
+  drop.querySelector('.ph-empty').hidden = true;
+  drop.append(img, ch);
+  const wrap = drop.parentElement;
+  if (onView && !wrap.querySelector('.photo-zoom')) {
+    const z = document.createElement('button');
+    z.type = 'button';
+    z.className = 'photo-zoom';
+    z.setAttribute('aria-label', t('photoZoom'));
+    z.innerHTML = ZOOM_ICON;
+    z.addEventListener('click', onView);
+    wrap.append(z);
+  }
+}
+const isPhoto = isImageData;
 
 function buildDishSlots() {
   const grid = $('#dishes');
@@ -366,10 +442,14 @@ function buildDishSlots() {
     const file = drop.querySelector('input');
     // Title and photo label depend on the number, so they are refreshed in applyUi via this hook.
     slot.relabel = () => { title.textContent = t('dishN', { n: i + 1 }); file.setAttribute('aria-label', `${t('addPhoto')}: ${t('dishN', { n: i + 1 })}`); };
-    bindPhotoDrop(drop, 'photo' + i, undefined, photo => { d.photo = photo; },
-      () => viewGroup(dishes.map(x => ({ photo: x.photo, caption: x.name })), i));
-    slot.querySelectorAll('[data-k]').forEach(inp => inp.addEventListener('input', () => { d[inp.dataset.k] = inp.value; }));
+    const view = () => viewGroup(dishes.map(x => ({ photo: x.photo, caption: x.name })), i);
+    bindPhotoDrop(drop, 'photo' + i, undefined, photo => { d.photo = photo; }, view);
+    slot.querySelectorAll('[data-k]').forEach(inp => {
+      inp.value = d[inp.dataset.k] || '';   // empty after a reset, filled when his draft comes back
+      inp.addEventListener('input', () => { d[inp.dataset.k] = inp.value; });
+    });
     grid.append(slot);
+    if (isPhoto(d.photo)) showPhoto(drop, d.photo, view);
   });
   applyI18n(ui, grid);
   $$('.photo-drop', grid).forEach(dr => (dr.dataset.busy = t('preparing')));
@@ -381,28 +461,50 @@ function updateRequired() {
   $$('.dish-slot').forEach(s => s.relabel?.());   // also relabels the couple slots (they share the class)
 }
 $$('input[name="pickup"]').forEach(r => r.addEventListener('change', updateRequired));
-// "Only the letter": no dishes and no trip question.
-// "Only the letter": no dishes and no trip question. Every letter style still works: its last paragraph changes (letters.js).
+// "Only the letter": no date step (3) and no secret envelope. Every letter style still works: its last paragraph changes (letters.js).
 function applyAsk() {
-  const none = ask() === 'none';
-  $('#tripPart').hidden = none;
-  $('#dishesPart').hidden = none;
-  $('#secretPart').hidden = none;   // she opens it after saying yes; a letter-only letter has no last page
+  $('#secretPart').hidden = ask() === 'none';   // she opens it after saying yes; a letter-only letter has no last page
   refreshPreview();
+  stepBar();   // step 3 (the date) is left out for "only the letter"
 }
 $$('input[name="ask"]').forEach(r => r.addEventListener('change', applyAsk));
 
-// The phone preview shows her page in the chosen theme, with her name.
+// Her phone follows the step: code screen (1), the letter (2), the dishes (3), the envelope in her theme (4, 5).
+// Her screens start in the letter's language, so their words come from there; the caption is in his language.
+const SCENES = { 1: 'code', 2: 'letter', 3: 'dishes', 4: 'open', 5: 'open' };
+let stampPhotos = [];   // the dish photos last drawn on her phone
 function refreshPhone() {
-  const screen = $('#phoneScreen');
-  THEMES.forEach(th => screen.classList.toggle('theme-' + th, th === themeId()));
+  const screen = $('#phoneScreen'), scene = SCENES[step], lang = letterLang();
+  screen.dataset.scene = scene;
+  const th = scene === 'code' ? THEMES[0] : themeId();   // her code screen is always classic: the theme is inside the locked letter
+  THEMES.forEach(x => screen.classList.toggle('theme-' + x, x === th));
   const name = $('#girlName').value.trim(), el = $('#pvName');
   if (name) { delete el.dataset.t; el.textContent = name; }
   else { el.dataset.t = 'pvName'; el.textContent = t('pvName'); }   // data-t: the language switch updates it
+  $('#pvPinTitle').textContent = tr(lang, 'pinTitle');
+  $('#pvPinLabel').textContent = tr(lang, 'pinLabel');
+  const hint = $('#hint').value.trim();
+  $('#pvHint').hidden = !hint;
+  $('#pvHint').textContent = hint ? tr(lang, 'hint', { hint }) : '';
+  $('#pvDishesQ').textContent = tr(lang, 'dishesQ');
+  if (scene === 'dishes') {   // photos are big: drawn only while this scene shows, and again only when a photo changes
+    const box = $('#pvStamps'), photos = dishes.map(d => (isPhoto(d.photo) ? d.photo : ''));
+    if (photos.some((p, i) => p !== stampPhotos[i]) || !box.children.length) {
+      stampPhotos = photos;
+      box.replaceChildren(...photos.map(p => {
+        const card = document.createElement('div');
+        card.className = 'pv-stamp';
+        card.append(p ? Object.assign(new Image(), { src: p, alt: '' }) : document.createElement('i'), document.createElement('b'));
+        return card;
+      }));
+    }
+    $$('b', box).forEach((b, i) => (b.textContent = (dishes[i].name || '').trim() || t('dishN', { n: i + 1 })));
+  }
+  $('.pv-open .ps-card').hidden = ask() === 'none';   // "only the letter" never asks her out
+  $('#pvCap').textContent = t('pvCap_' + scene);
 }
-$$('input[name="theme"]').forEach(r => r.addEventListener('change', refreshPhone));
-$('#girlName').addEventListener('input', refreshPhone);
-refreshPhone();
+$('#createForm').addEventListener('input', refreshPhone);
+$('#createForm').addEventListener('change', refreshPhone);
 
 // Secret envelope: "Need an idea?" fills in one of ours (in the letter's language), never over his own words.
 let ideaAt = -1;
@@ -414,6 +516,7 @@ $('#secretIdea').addEventListener('click', () => {
   ideaAt = (ideaAt + 1) % list.length;
   secretBox.value = list[ideaAt];
   secretBox.focus();
+  scheduleDraft();
 });
 secretBox.addEventListener('input', showIdeaBtn);
 buildDishSlots();
@@ -436,8 +539,9 @@ function buildCouple() {
     const title = slot.querySelector('.dish-title');
     const file = slot.querySelector('input');
     slot.relabel = () => { title.textContent = t('photoN', { n: i + 1 }); file.setAttribute('aria-label', `${t('addPhoto')}: ${t('photoN', { n: i + 1 })}`); };
-    bindPhotoDrop(slot.querySelector('.photo-drop'), 'couple' + i, COUPLE_PHOTO, photo => { couple[i] = photo; },
-      () => viewGroup(couple.map(p => ({ photo: p })), i));
+    const view = () => viewGroup(couple.map(p => ({ photo: p })), i);
+    bindPhotoDrop(slot.querySelector('.photo-drop'), 'couple' + i, COUPLE_PHOTO, photo => { couple[i] = photo; }, view);
+    slot.showSaved = photo => { couple[i] = photo; showPhoto(slot.querySelector('.photo-drop'), photo, view); };
     grid.append(slot);
   }
   applyI18n(ui, grid);
@@ -458,41 +562,240 @@ function setFormError(key, vars) {
   formError = key ? { key, vars } : null;
   $('#formError').textContent = key ? t(key, vars) : '';
 }
-function validate() {
-  $$('.field-error').forEach(p => { delete p.dataset.t; p.textContent = ''; });
-  $$('[aria-invalid]').forEach(e => e.removeAttribute('aria-invalid'));
+// Checks one step and marks what is missing there. Returns the fields with a problem (first one first).
+function checkStep(n) {
+  const sec = $(`.step[data-step="${n}"]`);
+  $$('.field-error', sec).forEach(p => { delete p.dataset.t; p.textContent = ''; });
+  $$('[aria-invalid]', sec).forEach(e => e.removeAttribute('aria-invalid'));
   const bad = [];
   const flag = (el, key, msgKey) => { el.setAttribute('aria-invalid', 'true'); setErr(key, msgKey); bad.push(el); };
-  if (!$('#girlName').value.trim()) flag($('#girlName'), 'girlName', 'errGirl');
-  if (!$('#fromName').value.trim()) flag($('#fromName'), 'fromName', 'errFrom');
-  if (!pin.full()) flag($('#pin'), 'pin', 'errPin');
-  if (isOwn() && $('#own').value.trim().length < OWN_MIN) flag($('#own'), 'own', 'errOwn');
-  if ($('#withPhotos').checked && !couple.some(Boolean)) flag($('#couple').querySelector('.photo-drop'), 'couple', 'errCouple');
-  const slots = $$('.dish-slot');
-  if (ask() !== 'none') dishes.forEach((d, i) => {
-    const s = slots[i];
-    if (!d.photo) flag(s.querySelector('.photo-drop'), 'photo' + i, 'errPhoto');
-    if (!(d.name || '').trim()) flag(s.querySelector('[data-k="name"]'), 'name' + i, 'errDish');
-    if (!pickup()) {
-      if (!(d.place || '').trim()) flag(s.querySelector('[data-k="place"]'), 'place' + i, 'errPlace');
-      if (!(d.location || '').trim()) flag(s.querySelector('[data-k="location"]'), 'location' + i, 'errLoc');
-    }
-    const loc = (d.location || '').trim();
-    if (loc && isUrl(loc) && !isMapUrl(loc) && !s.querySelector('[data-k="location"]').hasAttribute('aria-invalid')) {
-      flag(s.querySelector('[data-k="location"]'), 'location' + i, 'mapOnly');
-    }
-  });
+  if (n === 1) {
+    if (!$('#girlName').value.trim()) flag($('#girlName'), 'girlName', 'errGirl');
+    if (!$('#fromName').value.trim()) flag($('#fromName'), 'fromName', 'errFrom');
+    if (!pin.full()) flag($('#pin'), 'pin', 'errPin');
+  }
+  if (n === 2) {
+    if (isOwn() && $('#own').value.trim().length < OWN_MIN) flag($('#own'), 'own', 'errOwn');
+    if ($('#withPhotos').checked && !couple.some(Boolean)) flag($('#couple').querySelector('.photo-drop'), 'couple', 'errCouple');
+  }
+  if (n === 3 && ask() !== 'none') {
+    const slots = $$('#dishes .dish-slot');
+    dishes.forEach((d, i) => {
+      const sl = slots[i];
+      if (!d.photo) flag(sl.querySelector('.photo-drop'), 'photo' + i, 'errPhoto');
+      if (!(d.name || '').trim()) flag(sl.querySelector('[data-k="name"]'), 'name' + i, 'errDish');
+      if (!pickup()) {
+        if (!(d.place || '').trim()) flag(sl.querySelector('[data-k="place"]'), 'place' + i, 'errPlace');
+        if (!(d.location || '').trim()) flag(sl.querySelector('[data-k="location"]'), 'location' + i, 'errLoc');
+      }
+      const loc = (d.location || '').trim();
+      if (loc && isUrl(loc) && !isMapUrl(loc) && !sl.querySelector('[data-k="location"]').hasAttribute('aria-invalid')) {
+        flag(sl.querySelector('[data-k="location"]'), 'location' + i, 'mapOnly');
+      }
+    });
+  }
   return bad;
 }
+// The whole letter: the first step with a problem, or null when everything is fine.
+function checkAll() {
+  for (const n of stepList()) { const bad = checkStep(n); if (bad.length) return { n, bad }; }
+  return null;
+}
+// Says how many things need fixing and takes him (and screen readers) to the first one.
+function showBad(bad) {
+  setFormError(bad.length === 1 ? 'missing1' : 'missingN', { n: bad.length });
+  bad[0].scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  (bad[0].matches('input, textarea') ? bad[0] : bad[0].querySelector('input, textarea'))?.focus({ preventScroll: true });
+}
+
+// ---------- steps: Next checks only this step; the phone's Back button goes one step back ----------
+// Every step he moves forward adds a browser history entry ({ form, step, idx, base }), so the phone's Back button
+// (popstate) goes one step back. idx = place of the step in stepList(); base = the lowest idx reachable inside the form
+// by going back in history. The address hash is never touched: it picks his views (#new, #sealed, #paid-…).
+const stepList = () => [1, 2, 3, 4, 5].filter(n => n !== 3 || ask() !== 'none');
+const histState = () => (history.state?.form ? history.state : null);
+let pendingStep = 0;   // a step to show once a history jump (history.go) has landed
+let jumping = 0;       // a history jump is on its way: step buttons wait for it (a quick double tap would land on the wrong step)
+let entryState = null; // the history entry's step as it was when the form opened (a reload keeps it): his draft goes back there
+
+function stepBar() {
+  const list = stepList(), at = list.indexOf(step);
+  $$('#stepbar li').forEach(li => {
+    const n = +li.dataset.step, b = li.querySelector('button');
+    li.hidden = !list.includes(n);
+    li.querySelector('.sb-dot').textContent = list.indexOf(n) + 1;   // numbered by place: "only the letter" has 4 steps
+    li.classList.toggle('is-now', n === step);
+    li.classList.toggle('is-done', n !== step && n <= reached);
+    if (n === step) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    b.setAttribute('aria-label', `${t('stepOf', { n: list.indexOf(n) + 1, total: list.length })}: ${t('st' + n)}`);
+  });
+  $('#stepCount').textContent = t('stepOf', { n: at + 1, total: list.length });
+  $('#stepTitle').dataset.t = 'st' + step;
+  $('#stepTitle').textContent = t('st' + step);
+  $('#backBtn').hidden = at <= 0;
+  $('#nextBtn').hidden = step === 5;
+  $('#doneBtn').hidden = step !== 5;
+}
+
+// Shows step n (no history change). focus = move keyboard / screen-reader focus to the step's title.
+function showStep(n, focus = false) {
+  const list = stepList();
+  if (!list.includes(n)) n = n === 3 ? 2 : list[0];   // "only the letter" has no step 3
+  const changed = n !== step;
+  step = n;
+  reached = Math.max(reached, n);
+  $$('#createForm .step').forEach(sec => (sec.hidden = +sec.dataset.step !== n));
+  stepBar();
+  refreshPhone();
+  if (n === 5) buildSummary();
+  if (!changed) return;
+  setFormError(null);
+  closePreview(false);
+  const top = $('#stepbar').getBoundingClientRect().top;
+  if (top < 0) window.scrollBy(0, top - 12);   // the new step starts at its top
+  if (focus) $('#stepTitle').focus({ preventScroll: true });
+}
+const writeState = (how, n, base) => {
+  const idx = stepList().indexOf(n);
+  history[how === 'push' ? 'pushState' : 'replaceState']({ form: 1, step: n, idx, base: Math.min(base, idx) }, '');
+};
+// Forward: checks every step on the way and stops at the first one with a problem.
+function forwardTo(n) {
+  const list = stepList(), from = list.indexOf(step), to = list.indexOf(n);
+  const base = histState()?.base ?? from;
+  for (let i = from; i < to; i++) {
+    const bad = checkStep(list[i]);
+    if (bad.length) {
+      for (let k = from + 1; k <= i; k++) writeState('push', list[k], base);
+      showStep(list[i], true);
+      showBad(bad);
+      return;
+    }
+  }
+  for (let k = from + 1; k <= to; k++) writeState('push', list[k], base);
+  setFormError(null);
+  showStep(n, true);
+}
+// Back to an earlier step: through the browser history where it has the entries, so the phone's Back stays in step.
+function backTo(n, focus = true) {
+  const list = stepList(), cur = histState(), from = list.indexOf(step), to = list.indexOf(n);
+  showStep(n, focus);
+  if (!cur || cur.idx !== from) { writeState('replace', n, to); return; }
+  const land = Math.max(to, cur.base);
+  if (land < from) {
+    if (land > to) pendingStep = n;
+    clearTimeout(jumping);
+    jumping = setTimeout(() => { jumping = 0; }, 1000);   // in case the browser never reports the jump
+    history.go(land - from);
+  }
+  else writeState('replace', n, to);   // no form entry behind this one: this entry becomes step n
+}
+function goStep(n) { if (jumping) return; if (n > step) forwardTo(n); else if (n < step) backTo(n); }
+$('#stepbar').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) goStep(+b.dataset.go); });
+$('#nextBtn').addEventListener('click', () => { const list = stepList(); goStep(list[list.indexOf(step) + 1]); });
+$('#backBtn').addEventListener('click', () => { const list = stepList(); const prev = list[list.indexOf(step) - 1]; if (prev) goStep(prev); });
+addEventListener('popstate', () => {
+  clearTimeout(jumping); jumping = 0;
+  if ($('#pvCol').classList.contains('is-open') && !history.state?.preview) { closePreview(true, true); return; }   // Back closes her phone first
+  if (location.hash !== '#new' || $('#view-create').hidden) { pendingStep = 0; return; }   // leaving the form: route() handles it
+  const s = histState();
+  if (pendingStep) { const n = pendingStep; pendingStep = 0; writeState('replace', n, stepList().indexOf(n)); if (n !== step) showStep(n, true); return; }
+  if (s && s.step !== step) showStep(s.step, true);
+});
+// Opening the form: a fresh form starts at step 1; a form he already started stays on its step.
+function enterForm() {
+  const s = histState();
+  entryState = formDirty ? null : s;
+  const n = formDirty ? (s && stepList().includes(s.step) ? s.step : step) : 1;
+  if (!formDirty) reached = 1;
+  showStep(n);
+  writeState('replace', step, stepList().indexOf(step));
+}
+
+// Step 5: everything at a glance, each part with an Edit button.
+const cut = (v, max = 90) => (v.length > max ? v.slice(0, max - 1).trimEnd() + '…' : v);
+function buildSummary() {
+  const box = $('#summary');
+  const group = (n, rows) => {
+    const g = document.createElement('div');
+    g.className = 'sum-group';
+    const head = document.createElement('div');
+    head.className = 'sum-head';
+    const edit = Object.assign(document.createElement('button'), { type: 'button', className: 'link-btn', textContent: t('sumEdit') });
+    edit.setAttribute('aria-label', `${t('sumEdit')}: ${t('st' + n)}`);
+    edit.addEventListener('click', () => goStep(n));
+    head.append(Object.assign(document.createElement('h3'), { textContent: t('st' + n) }), edit);
+    const dl = document.createElement('dl');
+    rows.forEach(([label, value]) => {
+      const row = document.createElement('div');
+      const dd = Object.assign(document.createElement('dd'), { textContent: value || t('sumNone') });
+      if (!value) dd.className = 'is-empty';
+      row.append(Object.assign(document.createElement('dt'), { textContent: label }), dd);
+      dl.append(row);
+    });
+    g.append(head, dl);
+    return g;
+  };
+  const none = ask() === 'none';
+  const groups = [
+    group(1, [
+      [t('herName'), $('#girlName').value.trim()], [t('yourName'), $('#fromName').value.trim()],
+      [t('code'), pin.value()], [t('hintL'), cut($('#hint').value.trim())],
+      [t('letterLangT'), (LANGS.find(l => l.id === letterLang()) || {}).label],
+      [t('dateT'), t({ full: 'dateYes', dish: 'dateNo', none: 'dateNone' }[ask()])]
+    ]),
+    group(2, [
+      [t('sumStyle'), t('style_' + styleId())], [t('fontL'), t('font_' + fontId())],
+      [t('noteL'), cut($('#note').value.trim())],
+      [t('photosT'), $('#withPhotos').checked && couple.some(Boolean) ? t('sumPhotos', { n: couple.filter(Boolean).length }) : '']
+    ])
+  ];
+  if (!none) groups.push(group(3, [[t('sumTrip'), t(pickup() ? 'pickupYes' : 'pickupNo')], [t('sumDishes'), dishes.map(d => (d.name || '').trim()).filter(Boolean).join(', ')]]));
+  groups.push(group(4, [[t('openT'), t('open_' + opening())], [t('themeT'), t('theme_' + themeId())], ...(none ? [] : [[t('secretT'), cut(secretBox.value.trim())]])]));
+  box.replaceChildren(...groups);
+}
+
+// Her phone as a pop-up on smaller screens (beside the form on wide ones).
+function openPreview() {
+  const col = $('#pvCol');
+  col.classList.add('is-open');
+  col.setAttribute('role', 'dialog');
+  col.setAttribute('aria-modal', 'true');
+  $('#pvOpen').setAttribute('aria-expanded', 'true');
+  document.documentElement.style.overflow = 'hidden';
+  $('#pvClose').focus();
+  if (!history.state?.preview) history.pushState({ ...history.state, preview: 1 }, '');   // the phone's Back closes it
+}
+// fromHistory = the phone's Back already left the pop-up's history entry.
+function closePreview(refocus = true, fromHistory = false) {
+  const col = $('#pvCol');
+  if (!col.classList.contains('is-open')) return;
+  if (!fromHistory && history.state?.preview) history.back();
+  col.classList.remove('is-open');
+  col.removeAttribute('role');
+  col.removeAttribute('aria-modal');
+  $('#pvOpen').setAttribute('aria-expanded', 'false');
+  document.documentElement.style.overflow = '';
+  if (refocus) $('#pvOpen').focus();
+}
+$('#pvOpen').addEventListener('click', openPreview);
+$('#pvClose').addEventListener('click', () => closePreview());
+$('#pvCol').addEventListener('click', e => { if (e.target === e.currentTarget) closePreview(); });   // a tap outside the phone
+$('#pvCol').addEventListener('keydown', e => {
+  if (!$('#pvCol').classList.contains('is-open')) return;
+  if (e.key === 'Escape') { e.preventDefault(); closePreview(); }
+  if (e.key === 'Tab') { e.preventDefault(); $('#pvClose').focus(); }   // the close button is the only control inside
+});
+addEventListener('resize', () => { if (matchMedia('(min-width: 1000px)').matches) closePreview(false); });
 
 $('#createForm').addEventListener('submit', async e => {
   e.preventDefault();
+  if (step !== 5) { $('#nextBtn').click(); return; }   // Enter in a field before the last step = Next
   setFormError(null);
-  const bad = validate();
-  if (bad.length) {
-    setFormError(bad.length === 1 ? 'missing1' : 'missingN', { n: bad.length });
-    bad[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    (bad[0].matches('input, textarea') ? bad[0] : bad[0].querySelector('input, textarea'))?.focus({ preventScroll: true });   // screen readers land on the problem
+  const problem = checkAll();
+  if (problem) {   // takes him to the first step with something missing
+    backTo(problem.n, false);
+    showBad(problem.bad);
     return;
   }
   if (!cryptoReady()) { setFormError('needHttpsApp'); return; }
@@ -525,6 +828,7 @@ $('#createForm').addEventListener('submit', async e => {
       meta: { girlName, from, pickup: content.pickup, ask: content.ask, dishes: list, answerKey }
     });
     await keepLinkSecret(r.id, secret);
+    dropDraft();   // sealed: the draft has done its job
     lastSealed = { id: r.id, pin: code, girlName, lang, status: r.status, price: r.price, link: inviteLink(r.id, secret) };
     resetForm();
     location.hash = '#sealed';
@@ -552,21 +856,185 @@ function resetForm() {
   refreshPhone();
   applyAsk();
   setFormError(null);
+  formDirty = false;
+  draftState(null);
+  $('#draftNote').hidden = true;
+  disarmStartOver();
+  reached = 1;
+  showStep(1);
 }
+
+// ---------- draft (his unfinished letter, locked on this device; draft.js) ----------
+let draftTimer = 0, draftQuiet = false, formDirty = false, draftChain = Promise.resolve();
+let lastSaved = '';     // the draft as last stored: an unchanged form is not locked and written again (photos make it ~1 MB)
+let draftLoad = null;  // { uid, promise }: his stored draft, read once after sign-in (so the key is fetched before he opens the form)
+// The line under "Done": 'draftSaved' | 'draftNotSaved' | null. "Start over" shows while there is something to clear.
+function draftState(key) {
+  const s = $('#draftState');
+  s.hidden = !key;
+  if (key) { s.dataset.t = key; s.textContent = t(key); } else { delete s.dataset.t; s.textContent = ''; }
+  $('#startOver').hidden = !key;
+}
+const radioVal = name => ($(`input[name="${name}"]:checked`) || {}).value;
+function collectDraft() {
+  return {
+    v: 1, lang: letterLang(), girlName: $('#girlName').value, fromName: $('#fromName').value, pin: pin.value(), hint: $('#hint').value,
+    opening: opening(), theme: themeId(), style: styleId(), font: fontId(), own: $('#own').value, note: $('#note').value,
+    ask: ask(), pickup: radioVal('pickup'),
+    dishes: dishes.map(d => ({ name: d.name || '', place: d.place || '', location: d.location || '', photo: d.photo || '' })),
+    withPhotos: $('#withPhotos').checked, photos: couple.map(p => p || ''), secret: secretBox.value, step
+  };
+}
+// Nothing worth keeping (his name alone is filled in from his Google account).
+const draftEmpty = d => !d.girlName.trim() && !d.pin && !d.hint.trim() && !d.own.trim() && !d.note.trim() && !d.secret.trim() &&
+  !d.dishes.some(x => x.photo || x.name.trim() || x.place.trim() || x.location.trim()) && !d.photos.some(Boolean);
+
+async function saveDraftNow() {
+  clearTimeout(draftTimer); draftTimer = 0;
+  const uid = user?.uid;
+  if (!uid || !formDirty) return;
+  draftLoad = null;   // storage is about to change: the form on screen is the truth now
+  const d = collectDraft();
+  if (draftEmpty(d)) { await deleteDraft(uid); lastSaved = ''; draftState(null); return; }
+  const json = JSON.stringify(d);
+  if (json === lastSaved) return;
+  try {
+    const key = await getLinksLock();
+    if (uid !== user?.uid) return;   // signed out meanwhile
+    await saveDraft(uid, key, d);
+    lastSaved = json;
+    draftState('draftSaved');
+  } catch { if (uid === user?.uid) draftState('draftNotSaved'); }   // no key (offline) or no storage: never kept unlocked
+}
+// Saves run one after another, so an older save can never land after a newer one.
+const queueSave = () => (draftChain = draftChain.then(saveDraftNow, saveDraftNow));
+function dropDraft() {
+  clearTimeout(draftTimer); draftTimer = 0;
+  draftLoad = null; lastSaved = '';
+  const uid = user?.uid;
+  draftChain = draftChain.then(() => deleteDraft(uid), () => deleteDraft(uid));
+}
+function scheduleDraft() {
+  if (draftQuiet || !user) return;
+  formDirty = true;
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(queueSave, 1000);
+}
+$('#createForm').addEventListener('input', scheduleDraft);
+$('#createForm').addEventListener('change', scheduleDraft);
+// Leaving the page or switching apps: save now instead of waiting for the pause.
+document.addEventListener('visibilitychange', () => { if (document.hidden && draftTimer) queueSave(); });
+addEventListener('pagehide', () => { if (draftTimer) queueSave(); });
+
+function applyDraft(d) {
+  draftQuiet = true;
+  try {
+    const setRadio = (name, v) => { const r = typeof v === 'string' && $(`input[name="${name}"][value="${CSS.escape(v)}"]`); if (r) r.checked = true; };
+    ['lang', 'opening', 'theme', 'style', 'font', 'ask', 'pickup'].forEach(n => setRadio(n, d[n]));
+    const text = v => (typeof v === 'string' ? v : '');
+    $('#girlName').value = text(d.girlName).slice(0, 30);
+    if (text(d.fromName)) $('#fromName').value = text(d.fromName).slice(0, 30);
+    $('#hint').value = text(d.hint).slice(0, 60);
+    $('#own').value = text(d.own);
+    $('#note').value = text(d.note).slice(0, 400);
+    secretBox.value = text(d.secret).slice(0, 600);
+    pin.set(text(d.pin));
+    dishes.forEach((x, i) => {
+      const s = (Array.isArray(d.dishes) && d.dishes[i]) || {};
+      Object.assign(x, { name: text(s.name), place: text(s.place), location: text(s.location) });
+      if (isPhoto(s.photo)) x.photo = s.photo; else delete x.photo;
+    });
+    buildDishSlots();
+    buildCouple();
+    (Array.isArray(d.photos) ? d.photos : []).forEach((p, i) => { if (isPhoto(p)) $$('.couple-slot')[i]?.showSaved(p); });
+    $('#withPhotos').checked = !!d.withPhotos;
+    $('#couple').hidden = !d.withPhotos;
+    ideaAt = -1;
+    showIdeaBtn();
+    refreshPhone();
+    applyAsk();
+    updateRequired();
+  } finally { draftQuiet = false; }
+}
+
+// Reads his stored draft through the same queue as saves and deletes, so it never sees a half-finished change.
+// Started at sign-in: by the time he opens the form the key is usually here, so there is no gap to type into.
+function preloadDraft(uid) {
+  const promise = draftChain.then(async () => {
+    try { const key = await getLinksLock(); return key && uid === user?.uid ? await loadDraft(uid, key) : null; }
+    catch { return null; }   // this browser keeps no drafts (private mode): the form simply starts empty
+  });
+  draftChain = promise.then(() => {}, () => {});
+  draftLoad = { uid, promise };
+}
+// Opening the form: bring back his unfinished letter, unless he has already started typing (then the newer words win).
+async function restoreDraft() {
+  if (formDirty || !user) return;
+  const uid = user.uid;
+  if (draftLoad?.uid !== uid) preloadDraft(uid);
+  const load = draftLoad;
+  try {
+    const d = await load.promise;
+    if (!d || draftLoad !== load || formDirty || uid !== user?.uid || location.hash !== '#new') return;
+    draftLoad = null;
+    applyDraft(d);
+    // Back on the step he was on: after a reload the history entry knows it (and the entries behind it are his
+    // earlier steps, so the phone's Back keeps working); on another visit the draft does.
+    const prev = entryState?.form && !entryState.preview && entryState.idx === stepList().indexOf(entryState.step) ? entryState : null;
+    const back = prev ? prev.step : d.step;
+    if (step === 1 && [2, 3, 4, 5].includes(back) && stepList().includes(back)) {
+      reached = back;
+      showStep(back);
+      writeState('replace', step, prev ? prev.base : stepList().indexOf(step));
+    }
+    lastSaved = JSON.stringify(collectDraft());
+    formDirty = true;
+    $('#draftNote').hidden = false;
+    draftState('draftSaved');
+  } catch { /* nothing to bring back */ }
+}
+
+// "Start over": two taps (pop-up confirm boxes don't work everywhere), then an empty form and no draft.
+let overArmed = null;
+function disarmStartOver() {
+  clearTimeout(overArmed); overArmed = null;
+  const b = $('#startOver');
+  b.dataset.t = 'startOver'; b.textContent = t('startOver');
+}
+$('#startOver').addEventListener('click', () => {
+  if (!overArmed) {
+    const b = $('#startOver');
+    b.dataset.t = 'startOverAgain'; b.textContent = t('startOverAgain');
+    overArmed = setTimeout(disarmStartOver, 4000);
+    return;
+  }
+  dropDraft();
+  if (step !== 1) backTo(1, false);   // the phone's Back must not lead into the old steps
+  resetForm();
+  toast(t('draftCleared'));
+  window.scrollTo(0, 0);
+});
 
 // ---------- sealed: pay, then the link ----------
 function showDone() {
   const { pin: code, girlName, lang, status, price, link } = lastSealed;
   const paid = status === 'active';
+  // A link that could not be locked on this device lives only in this page: show it even before payment
+  // (she can't open it until it is paid), because going to the payment page would lose it.
+  const unsaved = !!link && unsavedLinks.has(lastSealed.id);
+  const showLink = paid || unsaved;
   $('#payBox').hidden = paid;
-  $('#linkPart').hidden = !paid;
+  $('#linkPart').hidden = !showLink;
   $('#doneText').textContent = paid ? t('sealedText', { name: girlName }) : '';
   $('#doneText').hidden = !paid;
   $('#payBtn').textContent = t('payBtn', { price: priceText(price) });
   $('#linkMissing').hidden = !paid || !!link;
+  $('#linkUnsaved').hidden = !unsaved;   // not locked on this device: copy it now
   $('#donePin').textContent = code;
-  $$('#linkPart .linkbox, #linkPart .share-row').forEach(e => (e.hidden = !link));
-  if (paid && link) {
+  $('#linkBox').hidden = !link;   // made on another device: only the code can be shown here
+  if (showLink && link) {
+    // The QR only once she can open the letter: a printed code must not lead to an unpaid letter.
+    try { drawQR($('#qrCanvas'), link); $('.qr-row').hidden = !paid; } catch { $('.qr-row').hidden = true; }
     const msg = tr(lang, 'share');   // the message she receives, in the letter's language
     $('#doneLink').value = link;
     $('#doneOpen').href = link;
@@ -627,6 +1095,11 @@ async function afterPayment(id) {
 $('#copyBtn').addEventListener('click', async () => {
   toast(t(await copyText($('#doneLink').value) ? 'copied' : 'copyFail'));
 });
+// The QR as a big PNG, e.g. to print on a card.
+$('#qrSave').addEventListener('click', async () => {
+  try { downloadBlob(await qrBlob($('#doneLink').value), 'maktubim-qr.png'); }
+  catch { toast(t('actionFail')); }
+});
 
 // ---------- start (last, so everything above is ready) ----------
 applyUi();
@@ -635,9 +1108,13 @@ store.signInRedirectError().then(code => {
 });
 let paidReturn = linkParam('paid', 'paid-', '[A-Za-z0-9]{16,40}');
 store.onUser(u => {
+  // Signed out (button, another tab or an expired session): start the page again from nothing, so no list row,
+  // link or code of the last person stays in the page (security scan 2026-11-14, F1). Another tab can also switch
+  // straight from one account to another with no sign-out in between: treated the same (scan 2026-11-14 #2, F2).
+  if (user && u?.uid !== user.uid) { location.replace(location.pathname); return; }
   user = u;
-  if (!u) { lastSealed = null; answers.clear(); resetForm(); $('#fromName').value = ''; closeLinks(); }   // a shared computer must not show the last person's link, code or draft
-  else if (u.uid !== linksUid) linksReady = openLinks(u.uid);
+  if (!u) { lastSealed = null; answers.clear(); resetForm(); $('#fromName').value = ''; closeLinks(); draftLoad = null; lastSaved = ''; }   // a shared computer must not show the last person's link, code or draft
+  else if (u.uid !== linksUid) { linksReady = openLinks(u.uid); preloadDraft(u.uid); }
   $('#userBox').hidden = !u;
   if (u) {
     $('#userName').textContent = store.DEMO ? 'Demo' : (u.name.split(' ')[0] || '');
