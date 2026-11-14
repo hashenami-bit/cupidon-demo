@@ -1,5 +1,8 @@
-// The letter (her name, text, photos) is locked with a key made from the 4-digit code.
-// The database only ever holds the locked version, so opening the link without the code shows nothing.
+// The letter (her name, text, photos) is locked in the browser with a key made from the 4-digit code
+// AND a random link secret. The secret lives only in the link (#id.secret — the part after # is never sent
+// to any server) and on his device, so someone who reads the database cannot open the letter.
+// Her answer is locked with a separate random answer key: it is inside the letter (for her) and in his summary
+// (so he can read her answer on any device). Old letters (no link secret) use the code alone.
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 const ITERATIONS = 250000;
@@ -14,10 +17,15 @@ export const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const randomBytes = n => crypto.getRandomValues(new Uint8Array(n));
 
 export const randomSalt = () => b64(randomBytes(16));
+// 16 random bytes, URL-safe (22 characters), for the link after the dot.
+export const randomLinkSecret = () => b64(randomBytes(16)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+export const newAnswerKey = () => b64(randomBytes(32));
+export const answerKeyFrom = keyB64 => crypto.subtle.importKey('raw', unb64(keyB64), 'AES-GCM', false, ['encrypt', 'decrypt']);
 export const cryptoReady = () => !!(window.crypto && crypto.subtle);
 
-export async function deriveKey(pin, saltB64) {
-  const base = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+export async function deriveKey(pin, saltB64, linkSecret = '') {
+  const material = linkSecret ? `${pin}:${linkSecret}` : pin;
+  const base = await crypto.subtle.importKey('raw', enc.encode(material), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
     { name: 'PBKDF2', salt: unb64(saltB64), iterations: ITERATIONS, hash: 'SHA-256' },
     base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);

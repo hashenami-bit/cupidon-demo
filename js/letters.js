@@ -165,9 +165,133 @@ const TEXT = {
   }
 };
 
-export function renderLetter(lang, styleId, name) {
+// Changes per mode, by paragraph number. Every ready-made letter asks her out (a date, an evening, "turn the page").
+// "Only the letter" (none): those paragraphs are rewritten so nothing asks her out — he only says what he feels.
+// "Only the dish" (dish): still a date, only the Classic ending mentions choosing a day, so that one changes.
+const CHANGES = {
+  en: {
+    none: {
+      tender: {
+        2: 'So I did not want to say it in a quick message. I wanted you to open this slowly, and to know that someone was thinking about you the whole time he wrote it.',
+        3: 'I don’t need anything in return. I only wanted you to know all of this. If you feel like answering, write to me: I will be waiting, smiling at the screen again.'
+      },
+      poetic: {
+        2: 'They say the best moments are the ones we share. Every moment I have shared with you is still with me: your voice, your smile, and the way time forgets to hurry when you are near.',
+        3: 'There is nothing to choose this time, my dear. Only these words, written for you alone. If they reach you, let me know.'
+      },
+      playful: {
+        2: 'The committee has therefore decided to inform you officially: you are wonderful. This decision is final and cannot be appealed. Bad jokes (mine) will continue as usual.',
+        3: 'No buttons to press this time. The committee (me) simply awaits your reply in our chat. Nervously, of course.'
+      },
+      honest: {
+        2: 'I did not want to say it in a quick text between other messages. You deserve more than that. You deserve words that were written slowly, just for you, by someone who wants you to feel special.',
+        3: 'So here it is: my letter, written with my own hands. You don’t have to decide anything now. I just didn’t want to keep it to myself any longer.'
+      },
+      classic: {
+        1: 'I have long admired you. Your kindness, your grace, the light way you carry yourself through the world. Being near you has become one of the quiet joys of my life, and I wanted you to know it.',
+        2: 'I ask for nothing in return. I only wished you to know how dearly you are thought of. Whenever you wish to reply, a single word from you will be enough.'
+      }
+    },
+    dish: { classic: { 2: 'Therefore I kindly request the pleasure of your company over a meal of your choosing. The day we shall settle together.' } }
+  },
+  uz: {
+    none: {
+      tender: {
+        2: 'Shuning uchun buni shoshilinch xabarda aytgim kelmadi. Bu maktubni shoshilmasdan ochishingni va uni yozgan odam butun vaqt davomida seni o‘ylaganini bilishingni xohladim.',
+        3: 'Buning evaziga hech narsa so‘ramayman. Faqat bularning barchasini bilishingni istadim. Agar javob berging kelsa, menga yoz: yana ekranga qarab jilmayib kutib turaman.'
+      },
+      poetic: {
+        2: 'Aytishlaricha, eng go‘zal lahzalar — baham ko‘rilganlari. Sen bilan baham ko‘rgan har bir lahza hali ham men bilan: ovozing, tabassuming va yoningda bo‘lganimda shoshishni unutadigan vaqt.',
+        3: 'Bu safar hech narsa tanlash shart emas, azizam. Faqat shu so‘zlar, faqat sen uchun yozilgan. Agar ular senga yetib borgan bo‘lsa, menga xabar ber.'
+      },
+      playful: {
+        2: 'Shu sababli hay’at senga rasman ma’lum qilishga qaror qildi: sen ajoyibsan. Bu qaror qat’iy va shikoyat qilinmaydi. Yomon hazillar (meniki) odatdagidek davom etadi.',
+        3: 'Bu safar hech qanday tugma bosish shart emas. Hay’at (ya’ni men) javobingni yozishmamizda kutadi. Albatta, hayajon bilan.'
+      },
+      honest: {
+        2: 'Buni boshqa xabarlar orasida shoshilinch yozgim kelmadi. Sen bundan ko‘prog‘iga loyiqsan. Sen o‘zingni alohida his qilishingni istagan odam tomonidan sekin, faqat sen uchun yozilgan so‘zlarga loyiqsan.',
+        3: 'Mana, bu mening o‘z qo‘lim bilan yozgan maktubim. Hozir hech narsani hal qilishing shart emas. Shunchaki buni ichimda saqlab yurishni boshqa istamadim.'
+      },
+      classic: {
+        1: 'Uzoq vaqtdan beri sendan hayratlanaman: mehribonliging, nafisliging, hayotda o‘zingni yengil tutishing. Yoningda bo‘lish hayotimning sokin quvonchlaridan biriga aylandi va buni bilishingni istadim.',
+        2: 'Buning evaziga hech narsa so‘ramayman. Faqat qanchalik qadrli ekaningni bilishingni istadim. Javob berishni xohlasang, sendan bitta so‘z kifoya.'
+      }
+    },
+    dish: { classic: { 2: 'Shu bois, o‘zing tanlagan taom ustida menga hamroh bo‘lishingni iltimos qilaman. Kunni esa birga kelishib olamiz.' } }
+  },
+  ru: {
+    none: {
+      tender: {
+        2: 'Поэтому мне не хотелось говорить это в коротком сообщении. Хотелось, чтобы ты открывала это письмо не спеша и знала: всё время, пока я его писал, я думал о тебе.',
+        3: 'Мне ничего не нужно взамен. Я просто хотел, чтобы ты всё это знала. Если захочешь ответить, напиши мне: я буду ждать и снова улыбаться экрану.'
+      },
+      poetic: {
+        2: 'Говорят, лучшие мгновения — те, которыми делишься. Каждое мгновение, которое я разделил с тобой, всё ещё со мной: твой голос, твоя улыбка и время, которое забывает спешить, когда ты рядом.',
+        3: 'В этот раз ничего не нужно выбирать, моя дорогая. Только эти слова, написанные для тебя одной. Если они дошли до тебя, дай мне знать.'
+      },
+      playful: {
+        2: 'Поэтому комиссия решила официально сообщить тебе: ты замечательная. Решение окончательное и обжалованию не подлежит. Плохие шутки (мои) продолжатся в обычном режиме.',
+        3: 'На этот раз никаких кнопок. Комиссия (то есть я) ждёт твоего ответа в нашем чате. Разумеется, с волнением.'
+      },
+      honest: {
+        2: 'Мне не хотелось писать это наспех, между другими сообщениями. Ты заслуживаешь большего. Ты заслуживаешь слов, написанных не спеша и только для тебя тем, кто хочет, чтобы ты почувствовала себя особенной.',
+        3: 'Так что вот оно — моё письмо, написанное своими руками. Тебе не нужно ничего решать прямо сейчас. Мне просто больше не хотелось держать это в себе.'
+      },
+      classic: {
+        1: 'Я давно восхищаюсь тобой: твоей добротой, твоим изяществом, той лёгкостью, с которой ты идёшь по жизни. Быть рядом с тобой стало одной из тихих радостей моей жизни, и мне хотелось, чтобы ты это знала.',
+        2: 'Я ничего не прошу взамен. Мне лишь хотелось, чтобы ты знала, как ты дорога. Если захочешь ответить, мне будет достаточно одного твоего слова.'
+      }
+    },
+    dish: { classic: { 2: 'Поэтому я прошу подарить мне твоё общество за ужином, который выберешь ты. О дне мы договоримся вместе.' } }
+  }
+};
+
+// ask = what she does after reading: 'full' (dish + day), 'dish' (only the dish) or 'none' (only the letter).
+export function renderLetter(lang, styleId, name, ask = 'full') {
   const byLang = TEXT[lang] || TEXT.en;
-  const t = byLang[styleId] || byLang.tender;
-  const fill = s => s.replaceAll('{name}', name);
-  return { greeting: fill(t.greeting), body: t.body.map(fill), closing: t.closing };
+  const id = byLang[styleId] ? styleId : 'tender';
+  const t = byLang[id];
+  const fill = s => s.replaceAll('{name}', () => name);   // a function, so $ signs in a name stay plain text
+  const changes = (CHANGES[lang] || CHANGES.en)[ask]?.[id] || {};
+  const body = t.body.map((p, i) => fill(changes[i] ?? p));
+  return { greeting: fill(t.greeting), body, closing: t.closing };
+}
+
+// Handwriting he can pick for the letter text (CSS classes .font-<id>, files in css/fonts.css). The first is the default.
+// "Need an idea?" for the secret envelope, in the letter's language (she reads it).
+export const SECRET_IDEAS = {
+  en: [
+    'I have been smiling since the moment you said yes.',
+    'Wear something comfy. The evening has a little surprise in it.',
+    'Ten things I like about you won’t fit here. I’ll tell you in person.',
+    'Kaptar knows a secret: I practised what to say to you three times.'
+  ],
+  uz: [
+    '“Ha” deganingdan beri jilmayishdan to‘xtamayapman.',
+    'Qulay kiyim kiy. Kechada kichkina syurpriz bor.',
+    'Sendagi menga yoqadigan o‘nta narsa bu yerga sig‘maydi. Uchrashganda aytaman.',
+    'Kaptar bir sirni biladi: senga nima deyishni uch marta mashq qildim.'
+  ],
+  ru: [
+    'С того момента, как ты сказала «да», я не перестаю улыбаться.',
+    'Надень что-нибудь удобное. В этом вечере будет маленький сюрприз.',
+    'Десять вещей, которые мне в тебе нравятся, здесь не поместятся. Расскажу при встрече.',
+    'Каптар знает секрет: я три раза репетировал, что тебе скажу.'
+  ]
+};
+
+// His choices for her page, used by both sides (the first one is the default; old letters have none).
+export const THEMES = ['classic', 'garden', 'night', 'atlas', 'blossom'];
+export const OPENINGS = ['seal', 'dove', 'ribbon', 'mist'];
+
+export const FONTS = ['marck', 'caveat', 'neucha'];
+export const fontOf = id => (FONTS.includes(id) ? id : FONTS[0]);   // old letters and unknown values → default
+
+// His own words: his text becomes the body (plain text only — callers use textContent, never HTML).
+// The greeting and the closing line come from the "tender" style so the letter still ends nicely.
+// No length limit on purpose: the only limit is the size of the whole locked letter (about 1 MB with the photos).
+export function renderOwn(lang, name, text) {
+  const base = renderLetter(lang, 'tender', name);
+  const body = String(text || '').split(/\r?\n+/).map(p => p.trim()).filter(Boolean);
+  return { greeting: base.greeting, body, closing: base.closing };
 }

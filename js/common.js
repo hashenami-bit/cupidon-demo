@@ -7,32 +7,25 @@ export function parseISO(iso) { const [y, m, d] = iso.split('-').map(Number); re
 export const fmtDM = iso => { const d = parseISO(iso); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`; };
 export const weekday = iso => parseISO(iso).toLocaleDateString('en-GB', { weekday: 'long' });
 export const fmtMs = ms => { const d = new Date(ms); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`; };
-
-export const isUrl = s => /^[a-z][a-z0-9+.-]*:/i.test((s || '').trim()) || /^www\./i.test((s || '').trim());
-
-// Same list as the server (functions/src/validate.js) — a server test checks both agree. Only real map sites, so a letter
-// can't send her to a fake page. "maps.google.com.evil.io" does NOT pass.
-const GOOGLE_TLD = '(com|uz|ru|kz|co\\.uk|de|com\\.tr|ae)';
-const MAP_HOSTS = [
-  new RegExp(`^(www\\.)?google\\.${GOOGLE_TLD}$`),
-  new RegExp(`^maps\\.google\\.${GOOGLE_TLD}$`),
-  /^maps\.app\.goo\.gl$/,
-  /^goo\.gl$/,
-  /^(www\.)?yandex\.(uz|ru|com|kz)$/,
-  /^(www\.)?(2gis\.(uz|ru|kz|com)|go\.2gis\.com)$/
-];
-export function isMapUrl(s) {
-  let u;
-  try { u = new URL((s || '').trim()); } catch { return false; }
-  if ((u.protocol !== 'https:' && u.protocol !== 'http:') || u.username || u.password) return false;
-  const host = u.hostname.toLowerCase();
-  if (!MAP_HOSTS.some(re => re.test(host))) return false;
-  if (/^(www\.)?google\./.test(host) || host === 'goo.gl' || /yandex\./.test(host)) return u.pathname.startsWith('/maps');
-  return true;
+export const fmtTime = ms => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+// The small "opened · tried No" line in his list, as [text key, values]. Letters made before opens were tracked
+// have no openedAt at all (not null): say nothing about them. `answer` is her unlocked answer or null.
+export function seenParts(row, answer) {
+  const out = [];
+  if (row.status === 'active') {
+    if (typeof row.openedAt === 'number') out.push(['rowOpened', { date: fmtMs(row.openedAt), time: fmtTime(row.openedAt) }]);
+    else if (row.openedAt === null && !row.meta?.answer) out.push(['rowNotOpened', {}]);
+  }
+  const tries = answer?.no;
+  if (Number.isInteger(tries) && tries > 0) out.push(['rowNoTries', { n: Math.min(tries, 99) }]);
+  return out;
 }
 
-// Map button target: his map link if it is a real map link, otherwise a Google Maps search
-// for the typed address. Any other link gives no button ('').
+// One copy of the map-link rules, shared with the server (public/js/shared/validate.js).
+// Imported first (a bare `export … from` would not make them usable inside this file, e.g. in mapsUrl).
+import { isMapUrl, looksLikeUrl as isUrl } from './shared/validate.js';
+export { isMapUrl, isUrl };
+
 export function mapsUrl(place, location) {
   const loc = (location || '').trim();
   if (isUrl(loc)) return isMapUrl(loc) ? loc : '';
@@ -40,8 +33,14 @@ export function mapsUrl(place, location) {
   return q ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) : '';
 }
 
-// Her link: invite.html#<id>. The part after # never reaches any server or log.
-export const inviteLink = id => new URL('invite.html#' + id, location.href).href;
+// Her link: invite.html#<id>.<secret> (old letters: no secret). The part after # never reaches any server or log.
+export const inviteLink = (id, secret = '') => new URL('invite.html#' + id + (secret ? '.' + secret : ''), location.href).href;
+// Reads { id, secret } from her link: "#<id>.<secret>", "#<id>" or the old "?i=<id>".
+export function readInviteLink() {
+  const m = location.hash.match(/^#([A-Za-z0-9]{16,40})(?:\.([A-Za-z0-9_-]{16,64}))?/);
+  if (m) return { id: m[1], secret: m[2] || '' };
+  return { id: new URLSearchParams(location.search).get('i') || '', secret: '' };
+}
 // Reads an id from "#<prefix><id>" (new links) or "?<name>=<id>" (old links, Octo return address).
 export function linkParam(name, prefix, pattern) {
   const m = location.hash.match(new RegExp('^#' + prefix + '(' + pattern + ')'));
@@ -50,6 +49,15 @@ export function linkParam(name, prefix, pattern) {
 }
 export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const wait = ms => new Promise(r => setTimeout(r, ms));
+// Browsers inside Telegram, Instagram, Facebook, Line and Android web views: downloads and Google sign-in often don't work there.
+export const inAppBrowser = () => /Telegram|Instagram|FBAN|FBAV|Line\/|; wv\)/i.test(navigator.userAgent);
+// Saves a file the plain way (a temporary download link).
+export function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
 
 let toastTimer;
 export function toast(msg) {
@@ -66,7 +74,7 @@ export async function copyText(text) {
   catch {
     const ta = document.createElement('textarea');
     ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.append(ta); ta.select();
+    document.body.append(ta); ta.select(); ta.setSelectionRange(0, text.length);   // iOS needs the explicit range
     const ok = document.execCommand('copy'); ta.remove(); return ok;
   }
 }
@@ -110,4 +118,25 @@ export function pinInput(container, onComplete) {
     focus() { boxes[0].focus(); },
     setDisabled(v) { boxes.forEach(b => (b.disabled = v)); }
   };
+}
+
+// Hearts fly out from an element (her "Yes" and the home page demo). Skipped for reduced motion.
+export function heartBurst(from) {
+  if (reducedMotion()) return;
+  const r = from.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const box = Object.assign(document.createElement('div'), { className: 'heart-burst' });
+  box.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 14; i++) {
+    const img = Object.assign(new Image(), { alt: '', src: `img/doodle/${i % 2 ? 'heart-blush' : 'heart'}.svg` });
+    const a = (i / 14) * Math.PI * 2 + Math.random() * 0.4, dist = 90 + Math.random() * 90, size = 16 + Math.random() * 16;
+    Object.assign(img.style, { left: `${cx - size / 2}px`, top: `${cy - size / 2}px`, width: `${size}px` });
+    img.animate([
+      { transform: 'translate(0, 0) scale(.3)', opacity: 0 },
+      { transform: `translate(${Math.cos(a) * dist * 0.7}px, ${Math.sin(a) * dist * 0.7}px) scale(1)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(${Math.cos(a) * dist}px, ${Math.sin(a) * dist + 40}px) scale(.9)`, opacity: 0 }
+    ], { duration: 1500 + Math.random() * 500, delay: 120 + Math.random() * 160, easing: 'cubic-bezier(.2, .7, .3, 1)', fill: 'both' });
+    box.append(img);
+  }
+  document.body.append(box);
+  setTimeout(() => box.remove(), 2600);
 }

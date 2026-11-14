@@ -1,0 +1,48 @@
+# Headers (Netlify reads this file; serve.mjs uses it locally too).
+
+# Every file.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+# Our pages: strict content rules, no framing. (Not on /__/auth/*: those are Google sign-in pages with their own rules.)
+/
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/index.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/index
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/invite.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/invite
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/pay-test.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/pay-test
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+# The privacy page loads no outside code: only our own files.
+/privacy.html
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/privacy
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+
+# Pictures change rarely: keep them a week. Font and Firebase files never change (a new version gets a new name).
+/img/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+# Firebase code: a new version gets a new folder name, so it never changes either.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable

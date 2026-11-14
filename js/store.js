@@ -1,44 +1,69 @@
-// Talks to the server. With Firebase keys in config.js it calls the real server functions;
-// without them it runs DEMO MODE: the same rules, copied here and kept in this browser only.
-import { firebaseConfig } from './config.js';
+// Talks to the server. Live: POST /api/<action> on this same site (Netlify functions, see
+// netlify/lib/http.mjs) + Firebase for Google login and reading his letters.
+// DEMO MODE (no Firebase settings, or on localhost): the same rules, kept in this browser only.
+import { firebaseConfig, authOnSite } from './config.js';
 
-export const DEMO = !firebaseConfig.apiKey;
-export const REGION = 'europe-west1';
+// Demo mode: no Firebase settings, or running on this computer (node serve.mjs).
+const LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+export const DEMO = !firebaseConfig.apiKey || LOCAL;
 export const validId = id => /^[A-Za-z0-9]{16,40}$/.test(id || '');
 
 // Every failure becomes a StoreError with a short `reason` the pages translate:
 // not-found, not-paid, wrong-code (triesLeft), paused (waitSec), locked, already-answered,
 // daily-limit, map-only, no-space, network, unknown.
+import { checkCreate } from './shared/validate.js';
+import { lockVerdict } from './shared/lock.js';
+
 export class StoreError extends Error {
   constructor(reason, extra = {}) { super(reason); this.reason = reason; Object.assign(this, extra); }
 }
 
-const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
+// Firebase is served from our own site (public/vendor/, see its README), so no code is loaded from an outside server.
+const SDK = new URL('../vendor/firebase-10.12.2/', import.meta.url).href;
 let fbPromise = null;
 function fb() {
   fbPromise ??= (async () => {
-    const [appM, A, F, Fn] = await Promise.all([
-      import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'),
-      import(SDK + 'firebase-firestore.js'), import(SDK + 'firebase-functions.js')]);
-    const app = appM.initializeApp(firebaseConfig);
-    return { A, F, Fn, auth: A.getAuth(app), db: F.getFirestore(app), fns: Fn.getFunctions(app, REGION) };
-  })();
+    const [appM, A, F] = await Promise.all([
+      import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
+    // Sign-in on our own address when it is set up (config.js → authOnSite), otherwise on firebaseapp.com.
+    const authDomain = (authOnSite || []).includes(location.hostname) ? location.hostname : firebaseConfig.authDomain;
+    const app = appM.initializeApp({ ...firebaseConfig, authDomain });
+    return { A, F, auth: A.getAuth(app), db: F.getFirestore(app) };
+  })().catch(e => { fbPromise = null; throw e; });   // a failed download must not be remembered: the next try starts fresh
   return fbPromise;
 }
 
-async function callFn(name, data) {
-  const { Fn, fns } = await fb();
-  try {
-    const r = await Fn.httpsCallable(fns, name, { timeout: 60000 })(data);
-    return r.data;
-  } catch (e) {
-    const code = String(e.code || '').replace('functions/', '');
-    const d = e.details || {};
-    if (d.reason) throw new StoreError(d.reason, d);
-    if (code === 'not-found') throw new StoreError('not-found');
-    if (['unavailable', 'deadline-exceeded'].includes(code) || !navigator.onLine) throw new StoreError('network');
-    throw new StoreError('unknown', { code });
+// AbortSignal.timeout is missing in older phones (iOS ≤ 15): fall back to a timer.
+function timeoutSignal(ms) {
+  if (typeof AbortSignal.timeout === 'function') return AbortSignal.timeout(ms);
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
+
+// Calls a server action. Sends his Google sign-in token when he is signed in (auth: true).
+// Her page calls with auth: false, so it never downloads the Firebase tools. A letter with photos is a big upload: it gets longer.
+async function callFn(name, data, { fresh = false, timeoutMs = 30000, auth: withAuth = true } = {}) {
+  const auth = withAuth ? (await fb()).auth : null;
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth?.currentUser) headers.Authorization = 'Bearer ' + await auth.currentUser.getIdToken(fresh);
+  let res, body;
+  try { res = await fetch('/api/' + name, { method: 'POST', headers, body: JSON.stringify({ data }), signal: timeoutSignal(timeoutMs) }); }
+  catch { throw new StoreError('network'); }
+  try { body = await res.json(); } catch { body = null; }   // the platform's own 429 page is not JSON
+  // Sign-in token refused: try once with a brand-new token, then ask him to sign in again.
+  if (res.status === 401 && auth?.currentUser) {
+    if (!fresh) return callFn(name, data, { fresh: true, timeoutMs, auth: withAuth });
+    throw new StoreError('signin');
   }
+  if (res.ok && body && 'data' in body) return body.data;
+  const err = body?.error || {};
+  const d = err.details || {};
+  if (d.reason) throw new StoreError(d.reason, d);   // the server's own reason first: "paused" and "daily-limit" are also 429s
+  if (res.status === 429) throw new StoreError('busy');
+  if (err.code === 'not-found') throw new StoreError('not-found');
+  if (!body || res.status >= 500 || err.code === 'unavailable') throw new StoreError('network');
+  throw new StoreError('unknown', { code: err.code });
 }
 
 const mapUser = u => u ? { uid: u.uid, name: u.displayName || '', photo: u.photoURL || '' } : null;
@@ -63,6 +88,13 @@ export async function signIn() {
   }
 }
 
+// After a "redirect" sign-in (used when the popup is blocked) Firebase reports problems here, on the next page load.
+export async function signInRedirectError() {
+  if (DEMO) return null;
+  try { const { A, auth } = await fb(); await A.getRedirectResult(auth); return null; }
+  catch (e) { return e?.code || 'unknown'; }
+}
+
 export async function signOut() {
   if (DEMO) { demo.signOut(); return; }
   const { A, auth } = await fb();
@@ -71,11 +103,12 @@ export async function signOut() {
 
 // ---------- his side ----------
 // input = { lang, pin, hint, content: {iv,data}, meta: {girlName, from, pickup, dishes} }
-export const createLetter = input => (DEMO ? demo.createLetter(input) : callFn('createLetter', input));
+export const createLetter = input => (DEMO ? demo.createLetter(input) : callFn('createLetter', input, { timeoutMs: 90000 }));
 export const deleteLetter = id => (DEMO ? demo.deleteLetter(id) : callFn('deleteLetter', { id }));
 export const unlockLetter = id => (DEMO ? demo.unlockLetter(id) : callFn('unlockLetter', { id }));
 export const startPayment = (id, lang) => (DEMO ? demo.startPayment(id) : callFn('startPayment', { id, lang }));
 export const checkPayment = id => (DEMO ? demo.checkPayment(id) : callFn('checkLetterPayment', { id }));
+export const linkKey = () => (DEMO ? demo.linkKey() : callFn('linkKey', {}));
 export const fakePay = (tx, cancel = false) => (DEMO ? demo.fakePay(tx, cancel) : callFn('fakePay', { tx, cancel }));
 
 // [{ id, createdAt, status, price, currency, answered, locked, lang, meta }]
@@ -94,24 +127,20 @@ export async function listMine() {
 
 // ---------- her side ----------
 // Public card: { lang, hint, status } or null. The letter itself needs the code.
+// Her side never loads Firebase: everything goes through the server (auth: false).
 export async function getCard(id) {
   if (!validId(id)) return null;
   if (DEMO) return demo.getCard(id);
-  const { F, db } = await fb();
-  try {
-    const s = await F.getDoc(F.doc(db, 'cards', id));
-    if (!s.exists()) return null;
-    const x = s.data();
-    return { lang: x.lang, hint: x.hint || '', status: x.status };
-  } catch { throw new StoreError('network'); }
+  try { return await callFn('getCard', { id }, { auth: false }); }
+  catch (e) { if (e.reason === 'not-found') return null; throw e; }
 }
-export const openLetter = (id, pin) => (DEMO ? demo.openLetter(id, pin) : callFn('openLetter', { id, pin }));
-export const submitAnswer = (id, pin, answer) => (DEMO ? demo.submitAnswer(id, pin, answer) : callFn('submitAnswer', { id, pin, answer }));
+export const openLetter = (id, pin) => (DEMO ? demo.openLetter(id, pin) : callFn('openLetter', { id, pin }, { auth: false }));
+export const submitAnswer = (id, pin, answer) => (DEMO ? demo.submitAnswer(id, pin, answer) : callFn('submitAnswer', { id, pin, answer }, { auth: false }));
 
 // ---------- demo mode: the server rules, in this browser ----------
 const demo = (() => {
   const KEY = 'cupidon.demo.v2', UKEY = 'cupidon.demo.user';
-  const PRICE = 15000, IN_A_ROW = 5, PAUSE = 10 * 60 * 1000, MAX_TOTAL = 30;
+  const PRICE = 15000;   // the demo always shows the payment step
   const watchers = new Set();
   const empty = () => ({ letters: {}, payments: {} });
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || empty(); } catch { return empty(); } };
@@ -120,19 +149,17 @@ const demo = (() => {
   const user = () => { try { return JSON.parse(localStorage.getItem(UKEY)); } catch { return null; } };
   const pause = () => new Promise(r => setTimeout(r, 250));   // feels like a real server
 
+  // Same wrong-code rules as the server (shared/lock.js).
   function checkCode(all, id, pin) {
     const l = all.letters[id];
     if (!l) throw new StoreError('not-found');
     if (l.invite.status !== 'active') throw new StoreError('not-paid');
-    const k = l.lock, now = Date.now();
-    if (k.totalFails >= MAX_TOTAL) throw new StoreError('locked');
-    if (k.pausedUntil > now) throw new StoreError('paused', { waitSec: Math.ceil((k.pausedUntil - now) / 1000) });
-    if (pin === l.meta.pin) { k.fails = 0; save(all); return l; }
-    k.fails++; k.totalFails++;
-    if (k.totalFails >= MAX_TOTAL) { l.invite.locked = true; save(all); throw new StoreError('locked'); }
-    if (k.fails >= IN_A_ROW) { k.fails = 0; k.pausedUntil = now + PAUSE; save(all); throw new StoreError('paused', { waitSec: PAUSE / 1000 }); }
+    const { lock, result } = lockVerdict(l.lock, pin === l.meta.pin, Date.now());
+    l.lock = lock;
+    if (result.justLocked) l.invite.locked = true;
     save(all);
-    throw new StoreError('wrong-code', { triesLeft: IN_A_ROW - k.fails });
+    if (result.ok) return l;
+    throw new StoreError(result.reason, result);
   }
   const own = (all, id) => { const l = all.letters[id]; if (!l) throw new StoreError('not-found'); return l; };
 
@@ -140,14 +167,22 @@ const demo = (() => {
     watchers, user,
     signIn() { localStorage.setItem(UKEY, JSON.stringify({ uid: 'demo', name: '', photo: '' })); watchers.forEach(f => f()); },
     signOut() { localStorage.removeItem(UKEY); watchers.forEach(f => f()); },
-    async createLetter(d) {
+    linkKey() {
+      let key = localStorage.getItem('cupidon.demo.linkKey');
+      if (!key) { key = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))); localStorage.setItem('cupidon.demo.linkKey', key); }
+      return { key };
+    },
+    async createLetter(input) {
       await pause();
+      let d;
+      try { d = checkCreate(input); }   // the very same checks as the server
+      catch (e) { throw new StoreError(e.details?.reason || 'invalid', e.details || {}); }
       const all = load();
       const id = rid(20), now = Date.now();
       all.letters[id] = {
-        invite: { ownerUid: 'demo', createdAt: now, lang: d.lang, hint: d.hint, status: 'unpaid', price: PRICE, currency: 'UZS', answered: false, locked: false, lastTx: null },
+        invite: { ownerUid: 'demo', createdAt: now, lang: d.lang, hint: d.hint, status: 'unpaid', price: PRICE, currency: 'UZS', answered: false, locked: false, openedAt: null, lastTx: null },
         content: d.content,
-        meta: { ...d.meta, pin: d.pin, lang: d.lang, salt: d.content.salt, answer: null, answeredAt: null },
+        meta: { ...d.meta, dishes: d.meta.dishes.map(({ name, place }) => ({ name, place })), pin: d.pin, lang: d.lang, salt: d.content.salt, answer: null, answeredAt: null },
         lock: { fails: 0, totalFails: 0, pausedUntil: 0 }
       };
       save(all);
@@ -182,7 +217,12 @@ const demo = (() => {
       return { status: l.invite.status, payment: all.payments[l.invite.lastTx]?.status || '' };
     },
     async getCard(id) { const l = load().letters[id]; return l ? { lang: l.invite.lang, hint: l.invite.hint || '', status: l.invite.status } : null; },
-    async openLetter(id, pin) { await pause(); const all = load(); const l = checkCode(all, id, pin); return { content: l.content, answer: l.meta.answer }; },
+    async openLetter(id, pin) {
+      await pause();
+      const all = load(); const l = checkCode(all, id, pin);
+      if (!l.invite.openedAt) { l.invite.openedAt = Date.now(); save(all); }
+      return { content: l.content, answer: l.meta.answer };
+    },
     async submitAnswer(id, pin, answer) {
       await pause();
       const all = load(); const l = checkCode(all, id, pin);

@@ -3,21 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cupidon — ask her out with a letter</title>
+<title>Maktubim — ask her out with a letter</title>
 <meta name="description" content="Write a sealed letter, add three dishes and send her a link. She picks the dish and the day.">
-<meta name="theme-color" content="#2A0E1F">
+<meta property="og:title" content="Maktubim 💌">
+<meta property="og:description" content="Write a sealed letter, add three dishes and send her a link.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://maktubim.uz/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F8E3DE">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Infant:wght@600&family=Great+Vibes&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/lora-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/great-vibes-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="demo-ribbon" id="demoRibbon" data-t="demoRibbon" hidden></div>
 
 <header class="topbar">
-  <a class="brand" href="#">Cupidon</a>
+  <a class="brand" href="#">Maktubim</a>
   <div class="topbar-right">
+    <nav class="lp-nav" data-t-label="lpNavLabel">
+      <button class="link-btn" type="button" data-scroll="lp-how" data-t="lpNavHow"></button>
+      <button class="link-btn" type="button" data-scroll="lp-faq" data-t="lpNavFaq"></button>
+    </nav>
     <div id="uiLang"></div>
     <div class="user" id="userBox" hidden>
       <img id="userPhoto" alt="" referrerpolicy="no-referrer">
@@ -30,30 +41,93 @@
 <main class="wrap">
   <section class="view" id="view-loading"><p class="muted center" data-t="loadingApp"></p></section>
 
-  <!-- Sign in -->
-  <section class="view" id="view-login" hidden>
-    <div class="hero">
-      <div class="envelope" aria-hidden="true">
-        <div class="env-back airmail"><i></i></div>
-        <div class="env-letter"></div>
-        <div class="env-pocket"><i></i></div>
-        <div class="env-flap"><i></i></div>
-        <span class="seal seal-static"><span>C</span></span>
+  <!-- Signed out: the home page for visitors (hero with a live demo phone, how it works, inside every letter, questions) -->
+  <section class="view landing" id="view-login" hidden>
+    <div class="lp-hero">
+      <div class="lp-copy">
+        <h1 class="hero-title" data-t="heroTitle"></h1>
+        <p class="hero-sub" data-t="heroSub"></p>
+        <button class="btn btn-light btn-google" id="signInBtn" type="button">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+          <span id="signInLabel" data-t="signInGoogle"></span>
+        </button>
+        <p class="lp-trust" data-t="lpTrust"></p>
+        <p class="error" id="signInError" role="alert"></p>
+        <p class="in-app-note" id="inAppNote" data-t="inAppBrowser" hidden></p>
       </div>
-      <h1 class="hero-title" data-t="heroTitle"></h1>
-      <p class="hero-sub" data-t="heroSub"></p>
-      <button class="btn btn-light btn-google" id="signInBtn" type="button">
-        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
-        <span id="signInLabel" data-t="signInGoogle"></span>
-      </button>
-      <p class="error" id="signInError" role="alert"></p>
-      <p class="in-app-note" id="inAppNote" data-t="inAppBrowser" hidden></p>
+      <figure class="lp-demo">
+        <div class="lp-phone" id="lpPhone" role="group" data-t-label="lpDemoLabel">
+          <div class="lp-screen" data-scene="ask">
+            <div class="lp-scene lp-scene-env" aria-hidden="true">
+              <div class="envelope" aria-hidden="true">
+                <div class="env-back airmail"><i></i></div>
+                <div class="env-letter"></div>
+                <div class="env-pocket"><i></i></div>
+                <div class="env-flap"><i></i></div>
+                <span class="seal seal-static"><span>M</span></span>
+              </div>
+              <p class="lp-for" data-t="lpEnvFor"></p>
+            </div>
+            <div class="lp-scene lp-scene-ask">
+              <div class="lp-dove" data-lp-kaptar="shy"></div>
+              <p class="lp-q" data-t="lpAskQ"></p>
+              <div class="lp-btns">
+                <button class="btn lp-yes" type="button" data-t="askYes"></button>
+                <button class="btn btn-ghost lp-no" type="button" data-t="askNo"></button>
+              </div>
+              <p class="lp-hint" aria-live="polite"></p>
+            </div>
+            <div class="lp-scene lp-scene-yes">
+              <div class="lp-dove" data-lp-kaptar="dance"></div>
+              <p class="lp-q" data-t="lpSaidYes"></p>
+              <button class="link-btn lp-again" type="button" data-t="lpAgain"></button>
+            </div>
+          </div>
+        </div>
+        <figcaption class="lp-cap" data-t="lpTry"></figcaption>
+      </figure>
     </div>
-    <ol class="how">
-      <li><h3 data-t="how1t"></h3><p data-t="how1p"></p></li>
-      <li><h3 data-t="how2t"></h3><p data-t="how2p"></p></li>
-      <li><h3 data-t="how3t"></h3><p data-t="how3p"></p></li>
-    </ol>
+
+    <section class="lp-section" id="lp-how" aria-labelledby="lpHowTitle">
+      <h2 class="lp-title" id="lpHowTitle" data-t="lpHowTitle"></h2>
+      <ol class="how">
+        <li><h3 data-t="how1t"></h3><p data-t="how1p"></p></li>
+        <li><h3 data-t="how2t"></h3><p data-t="how2p"></p></li>
+        <li><h3 data-t="how3t"></h3><p data-t="how3p"></p></li>
+      </ol>
+    </section>
+
+    <section class="lp-section" aria-labelledby="lpWhyTitle">
+      <h2 class="lp-title" id="lpWhyTitle" data-t="lpWhyTitle"></h2>
+      <ul class="lp-feats">
+        <li><img src="img/doodle/heart.svg" alt="" width="44" height="44"><h3 data-t="lpF1t"></h3><p data-t="lpF1p"></p></li>
+        <li><img src="img/doodle/trail.svg" alt="" width="44" height="44"><h3 data-t="lpF2t"></h3><p data-t="lpF2p"></p></li>
+        <li><img src="img/doodle/bow.svg" alt="" width="44" height="44"><h3 data-t="lpF3t"></h3><p data-t="lpF3p"></p></li>
+        <li><img src="img/doodle/rose-small.svg" alt="" width="44" height="44"><h3 data-t="lpF4t"></h3><p data-t="lpF4p"></p></li>
+        <li><img src="img/doodle/blossom.svg" alt="" width="44" height="44"><h3 data-t="lpF5t"></h3><p data-t="lpF5p"></p></li>
+        <li><img src="img/doodle/daisy.svg" alt="" width="44" height="44"><h3 data-t="lpF6t"></h3><p data-t="lpF6p"></p></li>
+      </ul>
+    </section>
+
+    <section class="lp-section" id="lp-faq" aria-labelledby="lpFaqTitle">
+      <h2 class="lp-title" id="lpFaqTitle" data-t="lpFaqTitle"></h2>
+      <div class="lp-faq">
+        <details><summary data-t="lpQ1"></summary><p data-t="lpA1"></p></details>
+        <details><summary data-t="lpQ2"></summary><p data-t="lpA2"></p></details>
+        <details><summary data-t="lpQ3"></summary><p data-t="lpA3"></p></details>
+        <details><summary data-t="lpQ4"></summary><p data-t="lpA4"></p></details>
+        <details><summary data-t="lpQ5"></summary><p data-t="lpA5"></p></details>
+        <details><summary data-t="lpQ6"></summary><p data-t="lpA6"></p></details>
+      </div>
+    </section>
+
+    <section class="lp-end" aria-labelledby="lpEndTitle">
+      <h2 class="lp-end-title" id="lpEndTitle" data-t="lpEndTitle"></h2>
+      <button class="btn btn-light btn-google" type="button" data-signin>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        <span data-t="signInGoogle"></span>
+      </button>
+    </section>
   </section>
 
   <!-- His letters -->
@@ -87,11 +161,11 @@
         <p class="help" data-t="whoH"></p>
         <div class="fields">
           <label class="field"><span><span data-t="herName"></span></span>
-            <input class="input" id="girlName" maxlength="30" autocomplete="off" placeholder="Sarvinoz">
+            <input class="input" id="girlName" maxlength="30" autocomplete="off" placeholder="X">
             <p class="field-error" data-err="girlName"></p>
           </label>
           <label class="field"><span><span data-t="yourName"></span> <small data-t="yourNameNote"></small></span>
-            <input class="input" id="fromName" maxlength="30" autocomplete="given-name" placeholder="Usmon">
+            <input class="input" id="fromName" maxlength="30" autocomplete="given-name" placeholder="Y">
             <p class="field-error" data-err="fromName"></p>
           </label>
         </div>
@@ -117,16 +191,78 @@
       </div>
 
       <div class="part">
+        <h2 data-t="openT"></h2>
+        <p class="help" data-t="openH"></p>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="opening" value="seal" checked><b data-t="open_seal"></b><small data-t="open_sealNote"></small></label>
+          <label class="choice"><input type="radio" name="opening" value="dove"><b data-t="open_dove"></b><small data-t="open_doveNote"></small></label>
+          <label class="choice"><input type="radio" name="opening" value="ribbon"><b data-t="open_ribbon"></b><small data-t="open_ribbonNote"></small></label>
+          <label class="choice"><input type="radio" name="opening" value="mist"><b data-t="open_mist"></b><small data-t="open_mistNote"></small></label>
+        </div>
+      </div>
+
+      <div class="part">
+        <h2 data-t="themeT"></h2>
+        <p class="help" data-t="themeH"></p>
+        <div class="theme-pick">
+          <div class="theme-list" role="radiogroup" aria-label="Background" data-t-label="themeT">
+            <label class="theme-choice"><input type="radio" name="theme" value="classic" checked><span class="theme-swatch theme-classic" aria-hidden="true"></span><b data-t="theme_classic"></b></label>
+            <label class="theme-choice"><input type="radio" name="theme" value="garden"><span class="theme-swatch theme-garden" aria-hidden="true"></span><b data-t="theme_garden"></b></label>
+            <label class="theme-choice"><input type="radio" name="theme" value="night"><span class="theme-swatch theme-night" aria-hidden="true"></span><b data-t="theme_night"></b></label>
+            <label class="theme-choice"><input type="radio" name="theme" value="atlas"><span class="theme-swatch theme-atlas" aria-hidden="true"></span><b data-t="theme_atlas"></b></label>
+            <label class="theme-choice"><input type="radio" name="theme" value="blossom"><span class="theme-swatch theme-blossom" aria-hidden="true"></span><b data-t="theme_blossom"></b></label>
+          </div>
+          <div class="phone" aria-hidden="true">
+            <div class="phone-view">
+              <div class="phone-screen theme-classic" id="phoneScreen">
+                <p class="env-caption"><span data-t="pvTo"></span><span class="script" id="pvName"></span></p>
+                <div class="envelope">
+                  <div class="env-back airmail"><i></i></div>
+                  <div class="env-letter"></div>
+                  <div class="env-pocket"><i></i></div>
+                  <div class="env-flap"><i></i></div>
+                  <span class="seal seal-static"><span>♥</span></span>
+                </div>
+                <div class="paper ps-card">
+                  <p data-t="pvQ"></p>
+                  <div class="ps-btns"><span class="btn btn-small" data-t="pvYes"></span><span class="btn btn-ghost btn-small" data-t="pvNo"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part">
         <h2 data-t="styleT"></h2>
         <p class="help" data-t="styleH"></p>
         <div class="chips" id="styles" role="radiogroup" data-t-label="styleT"></div>
-        <div class="letter-preview" id="preview" aria-live="polite"></div>
+        <p class="sub-label" id="fontLabel" data-t="fontL"></p>
+        <div class="chips font-chips" id="fonts" role="radiogroup" aria-labelledby="fontLabel"></div>
+        <div class="own-box" id="ownBox" hidden>
+          <label class="field"><span data-t="ownL"></span>
+            <textarea class="input" id="own" rows="9" data-t-ph="ownPh"></textarea>
+          </label>
+          <p class="own-meta"><small data-t="ownH"></small></p>
+          <p class="field-error" data-err="own"></p>
+        </div>
+        <div class="letter-preview" id="preview"></div>
         <label class="field field-note"><span><span data-t="noteL"></span> <small data-t="noteNote"></small></span>
           <textarea class="input" id="note" maxlength="400" data-t-ph="notePh"></textarea>
         </label>
       </div>
 
       <div class="part">
+        <h2 data-t="dateT"></h2>
+        <p class="help" data-t="dateH"></p>
+        <div class="choices three">
+          <label class="choice"><input type="radio" name="ask" value="full" checked><b data-t="dateYes"></b><small data-t="dateYesNote"></small></label>
+          <label class="choice"><input type="radio" name="ask" value="dish"><b data-t="dateNo"></b><small data-t="dateNoNote"></small></label>
+          <label class="choice"><input type="radio" name="ask" value="none"><b data-t="dateNone"></b><small data-t="dateNoneNote"></small></label>
+        </div>
+      </div>
+
+      <div class="part" id="tripPart">
         <h2 data-t="tripT"></h2>
         <p class="help" data-t="tripH"></p>
         <div class="choices">
@@ -135,10 +271,25 @@
         </div>
       </div>
 
-      <div class="part">
+      <div class="part" id="dishesPart">
         <h2 data-t="dishesT"></h2>
         <p class="help" data-t="dishesH"></p>
         <div class="dish-grid" id="dishes"></div>
+      </div>
+
+      <div class="part">
+        <h2 data-t="photosT"></h2>
+        <p class="help" data-t="photosH"></p>
+        <label class="switch"><input type="checkbox" id="withPhotos"><span class="switch-box" aria-hidden="true"></span><span data-t="photosOn"></span></label>
+        <div class="dish-grid couple-grid" id="couple" hidden></div>
+        <p class="field-error" data-err="couple"></p>
+      </div>
+
+      <div class="part" id="secretPart">
+        <h2 id="secretT" data-t="secretT"></h2>
+        <p class="help" id="secretH" data-t="secretH"></p>
+        <textarea class="input" id="secret" maxlength="600" rows="3" aria-labelledby="secretT" aria-describedby="secretH" data-t-ph="secretPh"></textarea>
+        <button class="link-btn secret-idea" id="secretIdea" type="button" data-t="secretIdea"></button>
       </div>
 
       <div class="submit-row">
@@ -174,6 +325,7 @@
       </div>
 
       <div class="link-part" id="linkPart">
+      <p class="in-app-note" id="linkMissing" data-t="linkOtherDevice" hidden></p>
       <div class="linkbox">
         <label class="sr-only" for="doneLink" data-t="linkLabel"></label>
         <input id="doneLink" readonly>
@@ -194,6 +346,20 @@
   </section>
 </main>
 
+<footer class="site-foot">
+  <div class="foot-in">
+    <a class="foot-brand" href="./" data-t-label="footHome">Maktubim</a>
+    <p class="foot-note" data-t="footNote"></p>
+    <nav class="foot-links" data-t-label="footNav">
+      <a href="privacy.html" data-privacy data-t="footPrivacy"></a>
+      <a data-support target="_blank" rel="noopener" data-t="footSupport" hidden></a>
+    </nav>
+    <p class="foot-copy">© <span id="footYear">2026</span> Maktubim</p>
+  </div>
+</footer>
+
+<script type="module" src="js/site.js"></script>
 <script type="module" src="js/boy.js"></script>
+<script type="module" src="js/landing.js"></script>
 </body>
 </html>

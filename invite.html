@@ -8,12 +8,16 @@
 <meta property="og:title" content="A letter for you 💌">
 <meta property="og:description" content="Someone wrote you a sealed letter. Open it with your code.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://maktubim.uz/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#2A0E1F">
+<meta name="theme-color" content="#F8E3DE">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Infant:wght@600&family=Great+Vibes&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/lora-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/great-vibes-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -58,18 +62,29 @@
   <!-- 2. Envelope -->
   <section class="screen" id="s-envelope" tabindex="-1">
     <p class="env-caption"><span data-t="to">To</span><span class="script" data-name></span></p>
-    <div class="envelope" id="envelope">
-      <div class="env-back airmail"><i></i></div>
-      <div class="env-letter"></div>
-      <div class="env-pocket"><i></i></div>
-      <div class="env-flap"><i></i></div>
-      <button class="seal" id="sealBtn" type="button"><span data-t="pressMe">Press me</span></button>
+    <!-- how she opens it (his choice): seal (default) | dove | ribbon | mist -->
+    <div class="env-stage mode-seal" id="envStage">
+      <div class="envelope" id="envelope">
+        <div class="env-back airmail"><i></i></div>
+        <div class="env-letter"></div>
+        <div class="env-pocket"><i></i></div>
+        <div class="env-flap"><i></i></div>
+        <button class="seal" id="sealBtn" type="button"><span data-t="pressMe">Press me</span></button>
+      </div>
+      <div class="ribbon" id="ribbon" hidden>
+        <span class="ribbon-band ribbon-v"></span><span class="ribbon-band ribbon-h"></span>
+        <button class="ribbon-bow" id="ribbonBtn" type="button" aria-label="Untie the ribbon" data-t-label="ribbonBtn"></button>
+      </div>
+      <canvas class="mist" id="mist" aria-hidden="true" hidden></canvas>
+      <button class="dove-courier" id="doveBtn" type="button" aria-label="Take the letter from Kaptar" data-t-label="doveBtn" hidden></button>
     </div>
-    <p class="open-hint" data-t="openHint">Break the seal to read it.</p>
+    <p class="open-hint" id="openHint" data-t="openHint">Break the seal to read it.</p>
+    <button class="link-btn" id="mistSkip" type="button" data-t="mistSkip" hidden>Open without wiping</button>
   </section>
 
   <!-- 3. Letter -->
   <section class="screen" id="s-letter" tabindex="-1">
+    <div class="memories" id="memories" hidden></div>
     <article class="letter paper">
       <h1 class="letter-greeting" id="lGreeting"></h1>
       <div id="lBody"></div>
@@ -78,21 +93,51 @@
       <p class="letter-sign" id="lSign"></p>
     </article>
     <button class="btn" id="toDishes" type="button" data-t="next">Next</button>
+    <p class="letter-end" id="letterEnd" hidden></p>
+  </section>
+
+  <!-- 3b. Will you come? Kaptar runs off with "No"; the 3rd time for good, and a hand counts 5 and presses "Yes" -->
+  <section class="screen" id="s-ask" tabindex="-1">
+    <header class="screen-head">
+      <div class="kaptar kaptar-ask" data-kaptar="shy"></div>
+      <p class="script-title" data-dear></p>
+      <h2 data-t="askQ">Will you go on a date with me?</h2>
+    </header>
+    <div class="ask-area" id="askArea">
+      <button class="btn ask-yes" id="askYes" type="button" data-t="askYes">Yes</button>
+      <div class="no-carrier" id="noCarrier">
+        <div class="kaptar no-dove" data-kaptar="grab"></div>
+        <button class="btn btn-ghost ask-no" id="askNo" type="button" data-t="askNo">No</button>
+      </div>
+      <div class="yes-hand" id="yesHand" hidden></div>
+    </div>
+    <p class="muted center no-hint" id="noHint" aria-live="polite"></p>
+  </section>
+
+  <section class="screen" id="s-yes" tabindex="-1">
+    <div class="kaptar kaptar-yes" data-kaptar="surprised"></div>
+    <h1 class="script-title" data-t="yesTitle">Really? Yes?!</h1>
+    <p class="center" data-t="yesText">Kaptar can hardly believe it. Now let’s plan our date.</p>
+    <button class="btn" id="yesGo" type="button" data-t="yesGo">Yes, really!</button>
   </section>
 
   <!-- 4. Dishes -->
   <section class="screen" id="s-dishes" tabindex="-1">
     <header class="screen-head">
+      <p class="steps" data-step="1"></p>
       <p class="script-title" data-dear></p>
       <h2 data-t="dishesQ">What would you like to eat on our date?</h2>
       <p class="muted" data-t="dishesTap">Tap the one you like most.</p>
     </header>
     <div class="stamps" id="stamps"></div>
+    <p class="error" id="dishError" role="alert"></p>
   </section>
 
   <!-- 5. Day and time -->
   <section class="screen" id="s-date" tabindex="-1">
     <header class="screen-head">
+      <p class="steps" data-step="2"></p>
+      <div class="kaptar kaptar-head" data-kaptar="calendar"></div>
       <p class="script-title" data-t="dateKicker">Lovely choice</p>
       <h2 data-t="dateQ">When shall we go?</h2>
       <p class="muted" data-t="dateHelp">Choose a day, then a time.</p>
@@ -119,16 +164,17 @@
 
   <!-- 6. Invitation -->
   <section class="screen" id="s-final" tabindex="-1">
+    <p class="steps" data-step="last"></p>
     <div class="invitation airmail">
       <div class="inv-inner">
         <span class="seal seal-static" id="invSeal"><span></span></span>
         <p class="inv-kicker" data-t="invTitle">Invitation</p>
         <p class="inv-dear" data-dear></p>
-        <p class="inv-line" data-t="invLine">you are invited to a date on</p>
+        <p class="inv-line" id="invLine" data-t="invLine">you are invited to a date on</p>
         <p class="inv-date" id="invDate"></p>
         <p class="inv-when" id="invWhen"></p>
         <figure class="inv-dish">
-          <div class="stamp-edge"><img id="invPhoto" alt=""></div>
+          <div class="stamp-edge" role="button" tabindex="0" data-t-label="photoZoom"><img id="invPhoto" alt=""></div>
           <figcaption id="invDish"></figcaption>
         </figure>
         <p class="inv-place" id="invPlace"></p>
@@ -136,6 +182,41 @@
         <p class="inv-addr" id="invPickup"></p>
         <a class="btn btn-ghost btn-small inv-map" id="invMap" target="_blank" rel="noopener noreferrer" hidden data-t="openMaps">Open in Maps</a>
         <p class="inv-sign" id="invSign"></p>
+      </div>
+    </div>
+    <div class="paper countdown" id="countdown">
+      <div class="kaptar" data-kaptar="dance"></div>
+      <div class="cd-main" id="cdMain">
+        <h2 class="cd-title" id="cdTitle" data-t="countTitle">Until our date</h2>
+        <div class="cd-timer" id="cdTimer" role="timer">
+          <p><b id="cdDays">0</b><span data-t="cdDays">days</span></p>
+          <p><b id="cdHours">0</b><span data-t="cdHours">hours</span></p>
+          <p><b id="cdMinutes">0</b><span data-t="cdMinutes">minutes</span></p>
+          <p><b id="cdSeconds">0</b><span data-t="cdSeconds">seconds</span></p>
+        </div>
+        <div class="cd-cal" id="cdCal">
+          <p class="cd-cal-title" data-t="addCal">Add to calendar</p>
+          <div class="cd-cal-btns">
+            <a class="btn btn-ghost btn-small" id="calGoogle" target="_blank" rel="noopener noreferrer" data-t="calGoogle">Google Calendar</a>
+            <button class="btn btn-ghost btn-small" id="calFile" type="button" data-t="calFile">iPhone and others (.ics)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="secret" id="secretBox" hidden>
+      <button class="secret-env" id="secretOpen" type="button" aria-expanded="false" aria-controls="secretNote">
+        <span class="envelope envelope-mini" aria-hidden="true">
+          <span class="env-back"><i></i></span>
+          <span class="env-letter"></span>
+          <span class="env-pocket"><i></i></span>
+          <span class="env-flap"><i></i></span>
+          <span class="seal seal-static"><span>♥</span></span>
+        </span>
+        <span class="secret-label" data-t="secretOpen">A secret envelope for you. Tap to open it.</span>
+      </button>
+      <div class="paper secret-note" id="secretNote" hidden>
+        <p class="secret-text" id="secretText"></p>
+        <p class="secret-sign" id="secretSign"></p>
       </div>
     </div>
     <div class="final-actions">
@@ -147,11 +228,23 @@
 
 </main>
 
+<footer class="site-foot site-foot-quiet">
+  <div class="foot-in">
+    <a class="foot-brand" href="./" data-t-label="footHome">Maktubim</a>
+    <nav class="foot-links" data-t-label="footNav">
+      <a href="./" data-t="footWrite"></a>
+      <a href="privacy.html" data-privacy data-t="footPrivacy"></a>
+      <a data-support target="_blank" rel="noopener" data-t="footSupport" hidden></a>
+    </nav>
+  </div>
+</footer>
+
 <div class="picture-sheet" id="pictureSheet" role="dialog" aria-modal="true" aria-labelledby="pictureHint" hidden>
   <img id="pictureImg" alt="">
   <p id="pictureHint" data-t="pictureHint"></p>
   <button class="btn btn-light" id="pictureClose" type="button" data-t="close"></button>
 </div>
+<script type="module" src="js/site.js"></script>
 <script type="module" src="js/girl.js"></script>
 </body>
 </html>
