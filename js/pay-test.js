@@ -1,4 +1,4 @@
-// Stand-in for the Octo card page while PAYMENT_PROVIDER=fake (or in demo mode). No money moves.
+// Stand-in for the Rahmat (Multicard) pay page while PAYMENT_PROVIDER=fake (or in demo mode). No money moves.
 import * as store from './store.js';
 import { tr, applyI18n, langSwitch, savedLang, saveLang, guessLang } from './i18n.js';
 import { $, linkParam } from './common.js';

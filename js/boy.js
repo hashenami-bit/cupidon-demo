@@ -1128,7 +1128,7 @@ function showDone() {
   showView('done');
 }
 
-// Opens the payment page (Octo, or the test page). He comes back to index.html?paid=<id> (Octo) or #paid-<id> (test page).
+// Opens the payment page (Rahmat/Octo, or the test page). He comes back to index.html?paid=<id> (Rahmat/Octo) or #paid-<id> (test page).
 async function goPay(id, button) {
   button.disabled = true;
   const label = button.textContent;
@@ -1169,7 +1169,7 @@ async function afterPayment(id) {
   if (status === 'active') lastSealed.status = 'active';
   const active = lastSealed.status === 'active';   // the list may already say "active" even if the check call failed
   showDone();
-  setPayError(active ? null : (payment === 'canceled' ? 'payCanceled' : payment === 'paid-no-letter' ? 'paidNoLetter' : 'payPending'));
+  setPayError(active ? null : ((payment === 'canceled' || payment === 'failed') ? 'payCanceled' : payment === 'paid-no-letter' ? 'paidNoLetter' : 'payPending'));
   $('#checkPayBtn').hidden = active;
 }
 
