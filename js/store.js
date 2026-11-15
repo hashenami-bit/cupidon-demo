@@ -13,6 +13,7 @@ export const validId = id => /^[A-Za-z0-9]{16,40}$/.test(id || '');
 // daily-limit, map-only, no-space, network, unknown.
 import { checkCreate } from './shared/validate.js';
 import { lockVerdict } from './shared/lock.js';
+import { TERMS_VERSION } from './shared/terms.js';
 
 export class StoreError extends Error {
   constructor(reason, extra = {}) { super(reason); this.reason = reason; Object.assign(this, extra); }
@@ -109,6 +110,9 @@ export const unlockLetter = id => (DEMO ? demo.unlockLetter(id) : callFn('unlock
 export const startPayment = (id, lang) => (DEMO ? demo.startPayment(id) : callFn('startPayment', { id, lang }));
 export const checkPayment = id => (DEMO ? demo.checkPayment(id) : callFn('checkLetterPayment', { id }));
 export const linkKey = () => (DEMO ? demo.linkKey() : callFn('linkKey', {}));
+// "I have read the terms": termsStatus() asks which version he accepted, acceptTerms(v) records it (date + version).
+export const termsStatus = () => (DEMO ? demo.terms() : callFn('terms', {}));
+export const acceptTerms = version => (DEMO ? demo.terms(version) : callFn('terms', { accept: version }));
 export const fakePay = (tx, cancel = false) => (DEMO ? demo.fakePay(tx, cancel) : callFn('fakePay', { tx, cancel }));
 
 // [{ id, createdAt, status, price, currency, answered, locked, lang, meta }]
@@ -139,7 +143,7 @@ export const submitAnswer = (id, pin, answer) => (DEMO ? demo.submitAnswer(id, p
 
 // ---------- demo mode: the server rules, in this browser ----------
 const demo = (() => {
-  const KEY = 'cupidon.demo.v2', UKEY = 'cupidon.demo.user';
+  const KEY = 'cupidon.demo.v2', UKEY = 'cupidon.demo.user', TKEY = 'cupidon.demo.terms';
   const PRICE = 15000;   // the demo always shows the payment step
   const watchers = new Set();
   const empty = () => ({ letters: {}, payments: {} });
@@ -172,11 +176,21 @@ const demo = (() => {
       if (!key) { key = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))); localStorage.setItem('cupidon.demo.linkKey', key); }
       return { key };
     },
+    // Same rule as the server: only the current version can be accepted.
+    async terms(accept) {
+      await pause();
+      if (accept !== undefined) {
+        if (accept !== TERMS_VERSION) throw new StoreError('old-terms');
+        if (localStorage.getItem(TKEY) !== TERMS_VERSION) localStorage.setItem(TKEY, TERMS_VERSION);
+      }
+      return { accepted: localStorage.getItem(TKEY), current: TERMS_VERSION };
+    },
     async createLetter(input) {
       await pause();
       let d;
       try { d = checkCreate(input); }   // the very same checks as the server
       catch (e) { throw new StoreError(e.details?.reason || 'invalid', e.details || {}); }
+      if (localStorage.getItem(TKEY) !== TERMS_VERSION) throw new StoreError('terms');   // same as the server: terms first
       const all = load();
       const id = rid(20), now = Date.now();
       all.letters[id] = {

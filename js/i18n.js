@@ -34,6 +34,8 @@ export const S = {
     needHttps: 'This page needs a secure (https) link to open the letter. Ask for the link again.',
     pinTitle: 'A letter for you',
     pinLabel: 'Type the 4-digit code to open it.',
+    pinTermsA: 'By opening the letter you agree to the',
+    pinTermsB: '.',
     hint: 'Hint: {hint}',
     to: 'To',
     pressMe: 'Press me',
@@ -108,10 +110,14 @@ export const S = {
     footNav: 'Site links',
     footNote: 'Every letter is locked on the writer’s phone before it is sent. We cannot read it.',
     footPrivacy: 'Privacy policy',
+    footTerms: 'Terms of Use',
+    footOffer: 'Public offer',
     footSupport: 'Support in Telegram',
     footWrite: 'Write your own letter',
     footHome: 'Maktubim home page',
-    privacyTitle: 'Privacy policy — Maktubim'
+    privacyTitle: 'Privacy policy — Maktubim',
+    termsTitle: 'Terms of Use — Maktubim',
+    offerTitle: 'Public offer — Maktubim'
   },
   uz: {
     loading: 'Ochilmoqda…',
@@ -131,6 +137,8 @@ export const S = {
     needHttps: 'Maktubni ochish uchun xavfsiz (https) havola kerak. Havolani qayta so‘ra.',
     pinTitle: 'Sen uchun maktub',
     pinLabel: 'Ochish uchun 4 xonali kodni kirit.',
+    pinTermsA: 'Maktubni ochib, sen',
+    pinTermsB: 'ga rozilik bildirasan.',
     hint: 'Ishora: {hint}',
     to: 'Kimga',
     pressMe: 'Meni bos',
@@ -205,10 +213,14 @@ export const S = {
     footNav: 'Sayt havolalari',
     footNote: 'Har bir maktub yuborilishidan oldin yozgan odamning telefonida qulflanadi. Biz uni o‘qiy olmaymiz.',
     footPrivacy: 'Maxfiylik siyosati',
+    footTerms: 'Foydalanish shartlari',
+    footOffer: 'Ommaviy oferta',
     footSupport: 'Telegramda yordam',
     footWrite: 'O‘z maktubingizni yozing',
     footHome: 'Maktubim bosh sahifasi',
-    privacyTitle: 'Maxfiylik siyosati — Maktubim'
+    privacyTitle: 'Maxfiylik siyosati — Maktubim',
+    termsTitle: 'Foydalanish shartlari — Maktubim',
+    offerTitle: 'Ommaviy oferta — Maktubim'
   },
   ru: {
     loading: 'Открываю…',
@@ -228,6 +240,8 @@ export const S = {
     needHttps: 'Чтобы открыть письмо, нужна защищённая (https) ссылка. Попроси прислать её ещё раз.',
     pinTitle: 'Письмо для тебя',
     pinLabel: 'Введи 4-значный код, чтобы открыть его.',
+    pinTermsA: 'Открывая письмо, ты принимаешь',
+    pinTermsB: '.',
     hint: 'Подсказка: {hint}',
     to: 'Кому',
     pressMe: 'Нажми меня',
@@ -302,10 +316,14 @@ export const S = {
     footNav: 'Ссылки сайта',
     footNote: 'Каждое письмо запирается на телефоне автора ещё до отправки. Мы не можем его прочитать.',
     footPrivacy: 'Политика конфиденциальности',
+    footTerms: 'Условия использования',
+    footOffer: 'Публичная оферта',
     footSupport: 'Поддержка в Telegram',
     footWrite: 'Написать своё письмо',
     footHome: 'Главная страница Maktubim',
-    privacyTitle: 'Политика конфиденциальности — Maktubim'
+    privacyTitle: 'Политика конфиденциальности — Maktubim',
+    termsTitle: 'Условия использования — Maktubim',
+    offerTitle: 'Публичная оферта — Maktubim'
   }
 };
 

@@ -12,6 +12,7 @@ import { kaptar } from './kaptar.js';
 import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, isUrl, isMapUrl, linkParam, inAppBrowser, wait, isImageData, downloadBlob } from './common.js';
 import { startOf, saveIcs } from './date-tools.js';
 import { drawQR, qrBlob } from './qr.js';
+import { TERMS_VERSION } from './shared/terms.js';
 
 const UI_KEY = 'cupidon.ui';
 let ui = savedLang(UI_KEY) || guessLang();
@@ -93,7 +94,7 @@ const setPayError = key => { payErrKey = key; $('#payError').textContent = key ?
 const dishes = [{}, {}, {}];
 const couple = [null, null, null];   // optional photos for her (data URLs)
 
-$$('#lettersEmpty [data-kaptar]').forEach(el => (el.innerHTML = kaptar(el.dataset.kaptar)));   // Kaptar waits on the empty letters list
+$$('#lettersEmpty [data-kaptar], #view-terms [data-kaptar]').forEach(el => (el.innerHTML = kaptar(el.dataset.kaptar)));   // Kaptar waits on the empty letters list and the terms step
 if (store.DEMO) {
   $('#demoRibbon').hidden = false;
   $('#signInLabel').dataset.t = 'tryDemo';
@@ -117,6 +118,7 @@ function applyUi() {
   $('#formError').textContent = formError ? t(formError.key, formError.vars) : '';
   $('#payError').textContent = payErrKey ? t(payErrKey) : '';
   $$('#pin input').forEach((e, i) => e.setAttribute('aria-label', t('digitN', { n: i + 1 })));
+  fillAgree();
   if (!$('#view-home').hidden) loadHome();
   if (!$('#view-done').hidden && lastSealed) showDone();
 }
@@ -132,16 +134,89 @@ function showView(name) {
 function route() {
   if (user === undefined) return;
   if (!user) return showView('login');
+  if (!termsOk) return showView('terms');
   if (location.hash === '#new') { showView('create'); enterForm(); refreshPreview(); restoreDraft(); return; }
   if (location.hash === '#sealed' && lastSealed) { showDone(); return; }
   showView('home');
   loadHome();
 }
 
+// ---------- "I have read the terms" ----------
+// The box must be ticked before signing in. The server records the date and version per account (/api/terms);
+// an account that never ticked the current version (signed in before the box existed, another person on this
+// computer, or the terms changed) sees the "One more step" screen instead of its letters.
+const TERMS_TICK = 'cupidon.termsTick';               // this tab: ticked just before a sign-in that may reload the page
+const TERMS_DEVICE = 'cupidon.termsDevice';           // someone on this device accepted this version: the home page hides the box
+const termsKey = uid => 'cupidon.terms.' + uid;       // this account accepted this version (saves a server call per visit)
+const tryGet = (s, k) => { try { return s.getItem(k); } catch { return null; } };
+const trySet = (s, k, v) => { try { if (v == null) s.removeItem(k); else s.setItem(k, v); } catch { /* private mode */ } };
+let termsOk = false;
+const LEGAL = { terms: 'terms.html', offer: 'offer.html', privacy: 'privacy.html' };
+const LEGAL_WORD = { terms: 'agreeTerms', offer: 'agreeOffer', privacy: 'agreePrivacy' };
+function fillAgree() {
+  const words = t('agreeText', { terms: '{terms}', offer: '{offer}', privacy: '{privacy}' }).split(/\{(terms|offer|privacy)\}/);
+  $$('.agree-text').forEach(box => box.replaceChildren(...words.map((part, i) => {
+    if (i % 2 === 0) return document.createTextNode(part);
+    const a = document.createElement('a');   // a new tab, so the page (and the tick) stays
+    Object.assign(a, { href: `${LEGAL[part]}#${ui}`, target: '_blank', rel: 'noopener', textContent: t(LEGAL_WORD[part]) });
+    return a;
+  })));
+}
+$('#agreeBox').hidden = tryGet(localStorage, TERMS_DEVICE) === TERMS_VERSION;
+function termsSaved(uid) {
+  trySet(localStorage, termsKey(uid), TERMS_VERSION);
+  trySet(localStorage, TERMS_DEVICE, TERMS_VERSION);
+  trySet(sessionStorage, TERMS_TICK, null);
+}
+// After sign-in: true when this account has accepted the current terms (records the home-page tick first).
+async function confirmTerms(uid) {
+  if (tryGet(localStorage, termsKey(uid)) === TERMS_VERSION) return true;
+  const ticked = tryGet(sessionStorage, TERMS_TICK) === TERMS_VERSION;
+  try {
+    const r = ticked ? await store.acceptTerms(TERMS_VERSION) : await store.termsStatus();
+    if (r?.accepted === TERMS_VERSION) { termsSaved(uid); return true; }
+  } catch {
+    if (ticked) { $('#termsGateOk').checked = true; $('#termsGateError').textContent = t('termsSaveFail'); }
+  }
+  return false;
+}
+$('#termsOk').addEventListener('change', () => {
+  $('#agreeBox').classList.remove('is-missing');
+  if ($('#termsOk').checked) $('#signInError').textContent = '';
+});
+$('#termsGateBtn').addEventListener('click', async () => {
+  const err = $('#termsGateError'), button = $('#termsGateBtn');
+  if (!$('#termsGateOk').checked) { err.textContent = t('termsTick'); $('#termsGateOk').focus(); return; }
+  if (!user) return;
+  err.textContent = '';
+  button.disabled = true;
+  try {
+    const r = await store.acceptTerms(TERMS_VERSION);
+    if (r?.accepted !== TERMS_VERSION) throw new Error('not saved');
+    termsSaved(user.uid);
+    termsOk = true;
+    afterSignIn();
+  } catch { err.textContent = t('termsSaveFail'); }
+  finally { button.disabled = false; }
+});
+
 $('#signInBtn').addEventListener('click', async () => {
   $('#signInError').textContent = '';
+  if (!$('#agreeBox').hidden) {
+    if (!$('#termsOk').checked) {
+      $('#signInError').textContent = t('termsFirst');
+      $('#agreeBox').classList.add('is-missing');
+      $('#agreeBox').scrollIntoView({ block: 'center' });   // the second button sits at the end of the page
+      $('#termsOk').focus({ preventScroll: true });
+      return;
+    }
+    trySet(sessionStorage, TERMS_TICK, TERMS_VERSION);
+  }
   try { await store.signIn(); }
-  catch (e) { $('#signInError').textContent = t(e.code === 'auth/unauthorized-domain' ? 'signInDomain' : 'signInFail'); }
+  catch (e) {
+    trySet(sessionStorage, TERMS_TICK, null);
+    $('#signInError').textContent = t(e.code === 'auth/unauthorized-domain' ? 'signInDomain' : 'signInFail');
+  }
 });
 $('#signOutBtn').addEventListener('click', async () => {
   if (draftTimer) await Promise.race([queueSave(), wait(1500)]);   // his last words are saved (locked) first, but offline never holds up sign-out
@@ -834,7 +909,13 @@ $('#createForm').addEventListener('submit', async e => {
     location.hash = '#sealed';
   } catch (err) {
     const reason = err.reason || err.message;
-    setFormError({ 'too-big': 'tooBig', 'no-space': 'noSpace', 'daily-limit': 'dailyLimit', 'daily-total': 'dailyLimitAll', 'unpaid-limit': 'unpaidLimit', 'map-only': 'mapOnly', signin: 'signInAgain', busy: 'tooFast' }[reason] || 'saveFailApp');
+    if (reason === 'terms' && user) {   // no record of his tick on the server: ask again, the draft keeps his letter
+      trySet(localStorage, termsKey(user.uid), null);
+      termsOk = false;
+      $('#termsGateError').textContent = t('termsAgain');
+      route();
+    }
+    setFormError({ 'too-big': 'tooBig', 'no-space': 'noSpace', 'daily-limit': 'dailyLimit', 'daily-total': 'dailyLimitAll', 'unpaid-limit': 'unpaidLimit', 'map-only': 'mapOnly', signin: 'signInAgain', busy: 'tooFast', terms: 'termsAgain' }[reason] || 'saveFailApp');
   } finally {
     btn.disabled = false; btn.textContent = t('done');
   }
@@ -1122,7 +1203,17 @@ store.onUser(u => {
     const from = $('#fromName');
     if (!from.value && u.name) from.value = u.name.split(' ')[0];
   }
-  if (u && paidReturn && store.validId(paidReturn)) {
+  termsOk = !!u && tryGet(localStorage, termsKey(u.uid)) === TERMS_VERSION;
+  if (u && !termsOk) {
+    showView('loading');
+    confirmTerms(u.uid).then(ok => { if (user !== u) return; termsOk = ok; afterSignIn(); });
+    return;
+  }
+  afterSignIn();
+});
+// Signed in and the terms are accepted (or signed out): back from payment, else the view the address asks for.
+function afterSignIn() {
+  if (user && termsOk && paidReturn && store.validId(paidReturn)) {
     const id = paidReturn;
     paidReturn = null;   // only once
     history.replaceState(null, '', location.pathname + '#sealed');
@@ -1130,7 +1221,7 @@ store.onUser(u => {
     return;
   }
   route();
-});
+}
 window.addEventListener('hashchange', route);
 // Back from the payment page can restore this page from memory with a dead button: start fresh.
 window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });

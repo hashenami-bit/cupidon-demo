@@ -507,6 +507,8 @@ textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
 
 .pin-card { display: grid; justify-items: center; gap: 14px; text-align: center; }
 .pin-card p { margin: 0; }
+.pin-card .pin-terms { max-width: 26em; color: var(--ink-soft); font-size: .85rem; }
+.pin-terms a { color: var(--rose-deep); text-underline-offset: 3px; }
 .pin-card .envelope { width: min(60vw, 230px); margin-bottom: 36px; transform: rotate(-3deg); }
 .pin.is-checking { opacity: .6; }
 .pin.shake { animation: shake .45s; }
@@ -1302,6 +1304,19 @@ body.legal-page::before, body.legal-page::after { display: none; }
   .legal-keep { grid-template-columns: minmax(0, 1fr); }
   .legal-keep dt { border-bottom: 0; padding-bottom: 0; }
 }
+/* links between the three documents (terms, offer, privacy) above the sheet */
+.legal-nav { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0 0 14px; font-size: .95rem; }
+.legal-nav a { color: var(--rose-deep); text-underline-offset: 3px; }
+.legal-nav a[aria-current="page"] { color: #2B1B20; font-weight: 700; text-decoration: none; }
+/* tables of the terms and offer (limits, storage periods, contacts) */
+.legal-table-wrap { margin: 4px 0 14px; overflow-x: auto; }
+.legal-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.legal-table th, .legal-table td { padding: 8px 12px 8px 0; border-bottom: 1px solid #E4DAD5; text-align: start; vertical-align: top; }
+.legal-table th { font-weight: 700; color: #2B1B20; border-top: 1px solid #E4DAD5; }
+.legal-table td:first-child { font-weight: 600; width: 40%; }
+/* details the owner still has to fill in (company name, address, e-mail) */
+.legal-todo { background: #FFF1B8; color: inherit; padding: 0 .2em; border-radius: 3px; }
+.legal-todo-note { margin-top: 24px; padding-top: 12px; border-top: 1px solid #E4DAD5; color: #6B5A60; font-size: .9rem; }
 
 /* ---------- visitors' home page (index.html signed out): hero + live demo phone, how it works, features, questions ---------- */
 .lp-nav { display: none; gap: 18px; }
@@ -1315,6 +1330,24 @@ body:has(#view-login:not([hidden])) .lp-nav { display: flex; }
 .lp-copy { display: grid; justify-items: start; gap: 18px; }
 .lp-copy .hero-title { background-position: left bottom; }
 .lp-trust { margin: -4px 0 0; color: var(--ink-soft); font-size: .95rem; }
+/* "I have read the terms" box (home page above the Google button, and the "one more step" screen) */
+.agree {
+  display: flex; align-items: flex-start; gap: 10px; max-width: 30em; margin: 0; padding: 10px 12px;
+  position: relative; z-index: 1; border-radius: 10px; background: rgba(255, 250, 244, .92); box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-soft); font-size: .95rem; line-height: 1.45; text-align: start; cursor: pointer;
+}
+.agree input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--rose); cursor: pointer; }
+.agree a { color: var(--rose-deep); font-weight: 600; text-underline-offset: 3px; }
+.agree.is-missing { box-shadow: inset 0 0 0 2px var(--rose); }
+.lp-copy .agree { margin: -4px 0 -6px; }
+.terms-gate {
+  display: grid; justify-items: center; gap: 14px; width: min(100%, 520px); margin: 24px auto; padding: 30px 24px 26px;
+  background: var(--ivory); border-radius: 12px; box-shadow: var(--shadow-paper); outline: 1px solid var(--gold-soft); outline-offset: -9px; text-align: center;
+}
+.terms-gate .page-title, .terms-gate p { margin: 0; }
+.terms-gate .agree { margin: 4px 0; background: #FFFEFB; }
+.terms-gate .error:empty { display: none; }
+.terms-dove { --k-size: 110px; }
 .lp-demo { margin: 0; display: grid; justify-items: center; gap: 14px; }
 .lp-cap { font-family: var(--hand); font-size: 1.45rem; color: var(--rose); }
 

@@ -18,8 +18,8 @@ export function mountFooter(doc = document) {
   doc.querySelectorAll('[data-support-missing]').forEach(e => { e.hidden = !!url; });
   const year = doc.getElementById('footYear');
   if (year) year.textContent = String(new Date().getFullYear());
-  // The privacy page opens in the language this page is showing now.
-  doc.querySelectorAll('a[data-privacy]').forEach(a => {
+  // The terms, offer and privacy pages open in the language this page is showing now.
+  doc.querySelectorAll('a[data-legal]').forEach(a => {
     a.addEventListener('click', () => { a.hash = doc.documentElement.lang || ''; });
   });
 }
