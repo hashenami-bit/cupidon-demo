@@ -6,7 +6,7 @@ import * as store from './store.js';
 import { deriveKey, decryptJSON, encryptJSON, answerKeyFrom, cryptoReady } from './crypto.js';
 import { FONTS, THEMES, OPENINGS, fontOf, renderLetter, renderOwn } from './letters.js';
 import { tr, dates, dayName, monthYear, guessLang, validLang, applyI18n, langSwitch, savedLang, saveLang } from './i18n.js';
-import { $, $$, pinInput, fmtDM, toISO, pad, parseISO, mapsUrl, isUrl, reducedMotion, wait, readInviteLink, inAppBrowser, heartBurst, isImageData } from './common.js';
+import { $, $$, pinInput, fmtDM, toISO, pad, parseISO, mapsUrl, isUrl, reducedMotion, wait, readInviteLink, inAppBrowser, heartBurst, isImageData, siteUrl } from './common.js';
 import { makeBanner, saveCanvas } from './banner.js';
 import { openPhotos } from './lightbox.js';
 import { kaptar, hand, bow } from './kaptar.js';
@@ -58,7 +58,7 @@ function petals() {
   for (let i = 0; i < 22; i++) {
     const img = new Image();
     img.alt = '';
-    img.src = `img/doodle/petal-${(i % 3) + 1}.svg`;
+    img.src = siteUrl(`img/doodle/petal-${(i % 3) + 1}.svg`);
     img.style.setProperty('--x', `${Math.round(Math.random() * 100)}vw`);
     img.style.setProperty('--dx', `${Math.round((Math.random() - 0.5) * 180)}px`);
     img.style.setProperty('--r', `${Math.round((Math.random() - 0.5) * 900)}deg`);

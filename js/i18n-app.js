@@ -2,6 +2,7 @@
 export const APP = {
   en: {
     pageTitle: 'Maktubim — ask her out with a letter',
+    pageDesc: 'Ask her out with a sealed letter: write it, add three dishes and send her a link. She opens it with a 4-digit code and picks the dish and the day.',
     uiLang: 'Interface language',
     loadingApp: 'Loading…',
     demoRibbon: 'Demo mode: letters are saved in this browser only. Add your Firebase keys to send real links (see README).',
@@ -168,6 +169,7 @@ export const APP = {
   },
   uz: {
     pageTitle: 'Maktubim — uni maktub bilan uchrashuvga taklif qiling',
+    pageDesc: 'Uni muhrlangan maktub bilan uchrashuvga taklif qiling: maktub yozing, uchta taom qo‘shing va havolani yuboring. U 4 xonali kod bilan ochadi, taom va kunni tanlaydi.',
     uiLang: 'Interfeys tili',
     loadingApp: 'Yuklanmoqda…',
     demoRibbon: 'Demo rejim: maktublar faqat shu brauzerda saqlanadi. Haqiqiy havolalar uchun Firebase kalitlarini qo‘shing (README’ga qarang).',
@@ -334,6 +336,7 @@ export const APP = {
   },
   ru: {
     pageTitle: 'Maktubim — пригласите её на свидание письмом',
+    pageDesc: 'Пригласите её на свидание запечатанным письмом: напишите его, добавьте три блюда и отправьте ссылку. Она откроет письмо 4-значным кодом и выберет блюдо и день.',
     uiLang: 'Язык интерфейса',
     loadingApp: 'Загрузка…',
     demoRibbon: 'Демо-режим: письма хранятся только в этом браузере. Чтобы отправлять настоящие ссылки, добавьте ключи Firebase (см. README).',

@@ -34,7 +34,10 @@ export function mapsUrl(place, location) {
 }
 
 // Her link: invite.html#<id>.<secret> (old letters: no secret). The part after # never reaches any server or log.
-export const inviteLink = (id, secret = '') => new URL('invite.html#' + id + (secret ? '.' + secret : ''), location.href).href;
+// An address from the site root, made from this file's own address (js/ → root): right on every page, also /uz/
+// and /ru/, and on the GitHub demo's sub-folder.
+export const siteUrl = path => new URL('../' + path, import.meta.url).href;
+export const inviteLink = (id, secret = '') => siteUrl('invite.html#' + id + (secret ? '.' + secret : ''));
 // Reads { id, secret } from her link: "#<id>.<secret>", "#<id>" or the old "?i=<id>".
 export function readInviteLink() {
   const m = location.hash.match(/^#([A-Za-z0-9]{16,40})(?:\.([A-Za-z0-9_-]{16,64}))?/);
@@ -131,7 +134,7 @@ export function heartBurst(from) {
   const box = Object.assign(document.createElement('div'), { className: 'heart-burst' });
   box.setAttribute('aria-hidden', 'true');
   for (let i = 0; i < 14; i++) {
-    const img = Object.assign(new Image(), { alt: '', src: `img/doodle/${i % 2 ? 'heart-blush' : 'heart'}.svg` });
+    const img = Object.assign(new Image(), { alt: '', src: siteUrl(`img/doodle/${i % 2 ? 'heart-blush' : 'heart'}.svg`) });
     const a = (i / 14) * Math.PI * 2 + Math.random() * 0.4, dist = 90 + Math.random() * 90, size = 16 + Math.random() * 16;
     Object.assign(img.style, { left: `${cx - size / 2}px`, top: `${cy - size / 2}px`, width: `${size}px` });
     img.animate([

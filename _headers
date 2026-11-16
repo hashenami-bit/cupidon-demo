@@ -8,7 +8,7 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin-allow-popups
 
-# Our pages: strict content rules, no framing. (Not on /__/auth/*: those are Google sign-in pages with their own rules.)
+# Our pages: strict content rules, no framing. /uz/ and /ru/ are the home page in that language (scripts/make-lang-pages.mjs). (Not on /__/auth/*: those are Google sign-in pages with their own rules.)
 /
   Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
   X-Frame-Options: DENY
@@ -16,6 +16,12 @@
   Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
   X-Frame-Options: DENY
 /index
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/uz/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+/ru/*
   Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
   X-Frame-Options: DENY
 /invite.html

@@ -4,18 +4,27 @@
 import * as store from './store.js';
 import { deriveKey, encryptJSON, decryptJSON, randomSalt, randomLinkSecret, newAnswerKey, answerKeyFrom, cryptoReady } from './crypto.js';
 import { LETTERS, FONTS, SECRET_IDEAS, THEMES, OPENINGS, renderLetter, renderOwn } from './letters.js';
-import { LANGS, tr, applyI18n, langSwitch, savedLang, saveLang, guessLang, dayName } from './i18n.js';
+import { LANGS, tr, applyI18n, langSwitch, savedLang, saveLang, guessLang, dayName, validLang } from './i18n.js';
 import { compressImage, COUPLE_PHOTO } from './image.js';
 import { saveDraft, loadDraft, deleteDraft } from './draft.js';
 import { openPhotos } from './lightbox.js';
 import { kaptar } from './kaptar.js';
-import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, isUrl, isMapUrl, linkParam, inAppBrowser, wait, isImageData, downloadBlob, answerShapeOk } from './common.js';
+import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, siteUrl, isUrl, isMapUrl, linkParam, inAppBrowser, wait, isImageData, downloadBlob, answerShapeOk } from './common.js';
 import { startOf, saveIcs } from './date-tools.js';
 import { drawQR, qrBlob } from './qr.js';
 import { TERMS_VERSION } from './shared/terms.js';
 
 const UI_KEY = 'cupidon.ui';
-let ui = savedLang(UI_KEY) || guessLang();
+// /uz/ and /ru/ are the same page with that language written in (for search engines). His own saved choice wins;
+// a first visit there takes the page's language and keeps it (so the payment page and the way back stay in it).
+const pageLang = validLang(document.documentElement.dataset.pageLang) ? document.documentElement.dataset.pageLang : null;
+let ui = savedLang(UI_KEY) || pageLang || guessLang();
+if (pageLang && !savedLang(UI_KEY)) saveLang(UI_KEY, pageLang);
+const LANG_PAGE = { en: '', uz: 'uz/', ru: 'ru/' };
+// The visitors' page is in the HTML as it is shown to a visitor (search engines read it). Someone who was signed in
+// last time sees "Loading…" instead until his account is known.
+const WAS_IN = 'cupidon.wasIn';
+try { if (localStorage.getItem(WAS_IN)) { $('#view-login').hidden = true; $('#view-loading').hidden = false; } } catch { /* private mode */ }
 const t = (k, v) => tr(ui, k, v);
 
 let user;            // undefined = still loading, null = signed out
@@ -108,6 +117,7 @@ const priceText = (price, lang = ui) => tr(lang, 'priceFmt', { p: new Intl.Numbe
 function applyUi() {
   document.documentElement.lang = ui;
   document.title = t('pageTitle');
+  document.querySelector('meta[name="description"]')?.setAttribute('content', t('pageDesc'));
   applyI18n(ui);
   updateRequired();
   refreshPreview();
@@ -122,7 +132,13 @@ function applyUi() {
   if (!$('#view-home').hidden) loadHome();
   if (!$('#view-done').hidden && lastSealed) showDone();
 }
-langSwitch($('#uiLang'), ui, lang => { ui = lang; saveLang(UI_KEY, lang); applyUi(); });
+langSwitch($('#uiLang'), ui, lang => {
+  ui = lang; saveLang(UI_KEY, lang);
+  // On the visitors' page the address follows the language (/, /uz/, /ru/), as search engines list them.
+  const there = siteUrl(LANG_PAGE[lang]);
+  if (!$('#view-login').hidden && new URL(there).pathname !== location.pathname) { location.assign(there); return; }
+  applyUi();
+});
 
 // ---------- views ----------
 function showView(name) {
@@ -151,7 +167,7 @@ const termsKey = uid => 'cupidon.terms.' + uid;       // this account accepted t
 const tryGet = (s, k) => { try { return s.getItem(k); } catch { return null; } };
 const trySet = (s, k, v) => { try { if (v == null) s.removeItem(k); else s.setItem(k, v); } catch { /* private mode */ } };
 let termsOk = false;
-const LEGAL = { terms: 'terms.html', offer: 'offer.html', privacy: 'privacy.html' };
+const LEGAL = { terms: siteUrl('terms.html'), offer: siteUrl('offer.html'), privacy: siteUrl('privacy.html') };
 const LEGAL_WORD = { terms: 'agreeTerms', offer: 'agreeOffer', privacy: 'agreePrivacy' };
 function fillAgree() {
   const words = t('agreeText', { terms: '{terms}', offer: '{offer}', privacy: '{privacy}' }).split(/\{(terms|offer|privacy)\}/);
@@ -1187,6 +1203,7 @@ store.onUser(u => {
   // straight from one account to another with no sign-out in between: treated the same (scan 2026-11-14 #2, F2).
   if (user && u?.uid !== user.uid) { location.replace(location.pathname); return; }
   user = u;
+  trySet(localStorage, WAS_IN, u ? '1' : null);
   if (!u) { lastSealed = null; answers.clear(); resetForm(); $('#fromName').value = ''; closeLinks(); draftLoad = null; lastSaved = ''; }   // a shared computer must not show the last person's link, code or draft
   else if (u.uid !== linksUid) { linksReady = openLinks(u.uid); preloadDraft(u.uid); }
   $('#userBox').hidden = !u;

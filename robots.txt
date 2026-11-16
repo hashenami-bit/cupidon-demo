@@ -1,0 +1,9 @@
+# Maktubim — https://maktubim.uz
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /__/
+Disallow: /admin
+Disallow: /pay-test
+
+Sitemap: https://maktubim.uz/sitemap.xml

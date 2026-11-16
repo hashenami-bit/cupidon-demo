@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="uz" data-page-lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- seo:start (made by scripts/make-lang-pages.mjs — edit there, not here) -->
+<title>Maktubim — uni maktub bilan uchrashuvga taklif qiling</title>
+<meta name="description" content="Uni muhrlangan maktub bilan uchrashuvga taklif qiling: maktub yozing, uchta taom qo‘shing va havolani yuboring. U 4 xonali kod bilan ochadi, taom va kunni tanlaydi.">
+<link rel="canonical" href="https://maktubim.uz/uz/">
+<link rel="alternate" hreflang="en" href="https://maktubim.uz/">
+<link rel="alternate" hreflang="uz" href="https://maktubim.uz/uz/">
+<link rel="alternate" hreflang="ru" href="https://maktubim.uz/ru/">
+<link rel="alternate" hreflang="x-default" href="https://maktubim.uz/">
+<meta property="og:site_name" content="Maktubim">
+<meta property="og:title" content="Maktubim — uni maktub bilan uchrashuvga taklif qiling">
+<meta property="og:description" content="Uni muhrlangan maktub bilan uchrashuvga taklif qiling: maktub yozing, uchta taom qo‘shing va havolani yuboring. U 4 xonali kod bilan ochadi, taom va kunni tanlaydi.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://maktubim.uz/uz/">
+<meta property="og:locale" content="uz_UZ">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ru_RU">
+<meta property="og:image" content="https://maktubim.uz/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"Maktubim","url":"https://maktubim.uz/","inLanguage":["en","uz","ru"]},{"@context":"https://schema.org","@type":"WebApplication","name":"Maktubim","url":"https://maktubim.uz/uz/","description":"Uni muhrlangan maktub bilan uchrashuvga taklif qiling: maktub yozing, uchta taom qo‘shing va havolani yuboring. U 4 xonali kod bilan ochadi, taom va kunni tanlaydi.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","inLanguage":"uz","image":"https://maktubim.uz/img/og.jpg"},{"@context":"https://schema.org","@type":"FAQPage","inLanguage":"uz","mainEntity":[{"@type":"Question","name":"Qancha turadi?","acceptedAnswer":{"@type":"Answer","text":"Ishga tushirish davrida bepul. Kuniga 10 tagacha maktub yuborish mumkin."}},{"@type":"Question","name":"Unga ro‘yxatdan o‘tish kerakmi?","acceptedAnswer":{"@type":"Answer","text":"Yo‘q. U havolangizni ochadi va siz bergan 4 xonali kodni kiritadi."}},{"@type":"Question","name":"Agar u «Yo‘q»ni bossa-chi?","acceptedAnswer":{"@type":"Answer","text":"Kaptar tugmani olib qochadi. Uchinchi urinishda uni butunlay olib uchib ketadi va kichkina qo‘l «Ha»ni bosadi."}},{"@type":"Question","name":"Maktubimni siz o‘qiy olasizmi?","acceptedAnswer":{"@type":"Answer","text":"Yo‘q. Telefoningiz maktubni yuborishdan oldin uning kodi va havolaning maxfiy qismi bilan qulflaydi, bu qism bizga hech qachon yetib kelmaydi."}},{"@type":"Question","name":"Havola qancha muddat ishlaydi?","acceptedAnswer":{"@type":"Answer","text":"Yuborilgandan keyin 120 kun. U javob bergach, javobdan keyin 150 kun saqlanadi, so‘ng o‘chiriladi."}},{"@type":"Question","name":"Nega Google orqali kirish kerak?","acceptedAnswer":{"@type":"Answer","text":"Maktublaringiz va uning javoblari hisobingizda saqlanishi va ularni faqat siz ko‘rishingiz uchun."}}]}]</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#F8E3DE">
+<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../fonts/lora-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/great-vibes-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../css/fonts.css">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="demo-ribbon" id="demoRibbon" data-t="demoRibbon" hidden>Demo rejim: maktublar faqat shu brauzerda saqlanadi. Haqiqiy havolalar uchun Firebase kalitlarini qo‘shing (README’ga qarang).</div>
+
+<header class="topbar">
+  <a class="brand" href="#">Maktubim</a>
+  <div class="topbar-right">
+    <nav class="lp-nav" data-t-label="lpNavLabel" aria-label="Bosh sahifa bo‘limlari">
+      <button class="link-btn" type="button" data-scroll="lp-how" data-t="lpNavHow">Qanday ishlaydi</button>
+      <button class="link-btn" type="button" data-scroll="lp-faq" data-t="lpNavFaq">Savollar</button>
+    </nav>
+    <div id="uiLang"></div>
+    <div class="user" id="userBox" hidden>
+      <img id="userPhoto" alt="" referrerpolicy="no-referrer">
+      <span id="userName"></span>
+      <button class="link-btn" id="signOutBtn" type="button" data-t="signOut">Chiqish</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="view" id="view-loading" hidden><p class="muted center" data-t="loadingApp">Yuklanmoqda…</p></section>
+
+  <!-- Signed out: the home page for visitors (hero with a live demo phone, how it works, inside every letter, questions) -->
+  <section class="view landing" id="view-login">
+    <div class="lp-hero">
+      <div class="lp-copy">
+        <h1 class="hero-title" data-t="heroTitle">Uni o‘zi ochadigan maktub bilan uchrashuvga taklif qiling.</h1>
+        <p class="hero-sub" data-t="heroSub">Muhrlangan maktub yozing, uchta taom qo‘shing va unga havola yuboring. U kodingizni kiritadi, maktubni o‘qiydi, taom va kunni tanlaydi hamda chiroyli taklifnomani saqlab qoladi.</p>
+        <!-- "I have read the terms": must be ticked before the first sign-in (the server records the date and version) -->
+        <label class="agree" id="agreeBox"><input type="checkbox" id="termsOk"><span class="agree-text"></span></label>
+        <button class="btn btn-light btn-google" id="signInBtn" type="button">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+          <span id="signInLabel" data-t="signInGoogle">Google orqali kirish</span>
+        </button>
+        <p class="lp-trust" data-t="lpTrust">Ishga tushirish davrida bepul. Unga hisob ochish shart emas.</p>
+        <p class="error" id="signInError" role="alert"></p>
+        <p class="in-app-note" id="inAppNote" data-t="inAppBrowser" hidden>Telegram yoki Instagram ichida Google orqali kirish ishlamaydi. Sahifani Chrome yoki Safari’da oching (menyu ⋮ → Brauzerda ochish).</p>
+      </div>
+      <figure class="lp-demo">
+        <div class="lp-phone" id="lpPhone" role="group" data-t-label="lpDemoLabel" aria-label="Sinab ko‘rish mumkin bo‘lgan namuna taklifnoma">
+          <div class="lp-screen" data-scene="ask">
+            <div class="lp-scene lp-scene-env" aria-hidden="true">
+              <div class="envelope" aria-hidden="true">
+                <div class="env-back airmail"><i></i></div>
+                <div class="env-letter"></div>
+                <div class="env-pocket"><i></i></div>
+                <div class="env-flap"><i></i></div>
+                <span class="seal seal-static"><span>M</span></span>
+              </div>
+              <p class="lp-for" data-t="lpEnvFor">Malikaga maktub</p>
+            </div>
+            <div class="lp-scene lp-scene-ask">
+              <div class="lp-dove" data-lp-kaptar="shy"></div>
+              <p class="lp-q" data-t="lpAskQ">Malika, men bilan uchrashuvga borasanmi?</p>
+              <div class="lp-btns">
+                <button class="btn lp-yes" type="button" data-t="askYes">Ha</button>
+                <button class="btn btn-ghost lp-no" type="button" data-t="askNo">Yo‘q</button>
+              </div>
+              <p class="lp-hint" aria-live="polite"></p>
+            </div>
+            <div class="lp-scene lp-scene-yes">
+              <div class="lp-dove" data-lp-kaptar="dance"></div>
+              <p class="lp-q" data-t="lpSaidYes">U «Ha» dedi!</p>
+              <button class="link-btn lp-again" type="button" data-t="lpAgain">Yana ko‘rish</button>
+            </div>
+          </div>
+        </div>
+        <figcaption class="lp-cap" data-t="lpTry">«Yo‘q»ni bosib ko‘ring</figcaption>
+      </figure>
+    </div>
+
+    <section class="lp-section" id="lp-how" aria-labelledby="lpHowTitle">
+      <h2 class="lp-title" id="lpHowTitle" data-t="lpHowTitle">Qanday ishlaydi</h2>
+      <ol class="how">
+        <li><h3 data-t="how1t">Siz yozasiz</h3><p data-t="how1p">Uning ismi, 4 xonali kod, maktub uslubi va uchta taom surati.</p></li>
+        <li><h3 data-t="how2t">U ochadi</h3><p data-t="how2p">U kodni kiritadi, muhrni sindiradi, maktubingizni o‘qiydi va tanlaydi.</p></li>
+        <li><h3 data-t="how3t">Uchrashasiz</h3><p data-t="how3p">Uning javobini shu yerda ko‘rasiz: taom, kun va vaqt.</p></li>
+      </ol>
+    </section>
+
+    <section class="lp-section" aria-labelledby="lpWhyTitle">
+      <h2 class="lp-title" id="lpWhyTitle" data-t="lpWhyTitle">Har bir maktubda</h2>
+      <ul class="lp-feats">
+        <li><img src="../img/doodle/heart.svg" alt="" width="44" height="44"><h3 data-t="lpF1t">Uning kodi bilan muhrlangan</h3><p data-t="lpF1p">Uni faqat havola va uning 4 xonali kodi ochadi. Hatto biz ham o‘qiy olmaymiz.</p></li>
+        <li><img src="../img/doodle/trail.svg" alt="" width="44" height="44"><h3 data-t="lpF2t">Kaptar yetkazadi</h3><p data-t="lpF2p">Kaptar pochtachi maktubni olib boradi va «Yo‘q»ni bosishga qo‘ymaydi.</p></li>
+        <li><img src="../img/doodle/bow.svg" alt="" width="44" height="44"><h3 data-t="lpF3t">Ochishning to‘rt usuli</h3><p data-t="lpF3p">Muhr, kaptar, yechiladigan atlas lenta yoki barmoq bilan artiladigan tumanli oyna.</p></li>
+        <li><img src="../img/doodle/rose-small.svg" alt="" width="44" height="44"><h3 data-t="lpF4t">Rejani u tanlaydi</h3><p data-t="lpF4p">Suratlaringiz bilan uchta taom, so‘ng kalendardan kun va vaqt.</p></li>
+        <li><img src="../img/doodle/blossom.svg" alt="" width="44" height="44"><h3 data-t="lpF5t">Suratlar va maxfiy xat</h3><p data-t="lpF5p">Ikkalangizning uchtagacha suratingiz va qo‘shimcha so‘zlar yozilgan yashirin konvert.</p></li>
+        <li><img src="../img/doodle/daisy.svg" alt="" width="44" height="44"><h3 data-t="lpF6t">O‘zbek, rus, ingliz</h3><p data-t="lpF6p">Siz bir tilda yozasiz, u esa ekranlarni o‘z tiliga o‘tkaza oladi.</p></li>
+      </ul>
+    </section>
+
+    <section class="lp-section" id="lp-faq" aria-labelledby="lpFaqTitle">
+      <h2 class="lp-title" id="lpFaqTitle" data-t="lpFaqTitle">Savollar</h2>
+      <div class="lp-faq">
+        <details><summary data-t="lpQ1">Qancha turadi?</summary><p data-t="lpA1">Ishga tushirish davrida bepul. Kuniga 10 tagacha maktub yuborish mumkin.</p></details>
+        <details><summary data-t="lpQ2">Unga ro‘yxatdan o‘tish kerakmi?</summary><p data-t="lpA2">Yo‘q. U havolangizni ochadi va siz bergan 4 xonali kodni kiritadi.</p></details>
+        <details><summary data-t="lpQ3">Agar u «Yo‘q»ni bossa-chi?</summary><p data-t="lpA3">Kaptar tugmani olib qochadi. Uchinchi urinishda uni butunlay olib uchib ketadi va kichkina qo‘l «Ha»ni bosadi.</p></details>
+        <details><summary data-t="lpQ4">Maktubimni siz o‘qiy olasizmi?</summary><p data-t="lpA4">Yo‘q. Telefoningiz maktubni yuborishdan oldin uning kodi va havolaning maxfiy qismi bilan qulflaydi, bu qism bizga hech qachon yetib kelmaydi.</p></details>
+        <details><summary data-t="lpQ5">Havola qancha muddat ishlaydi?</summary><p data-t="lpA5">Yuborilgandan keyin 120 kun. U javob bergach, javobdan keyin 150 kun saqlanadi, so‘ng o‘chiriladi.</p></details>
+        <details><summary data-t="lpQ6">Nega Google orqali kirish kerak?</summary><p data-t="lpA6">Maktublaringiz va uning javoblari hisobingizda saqlanishi va ularni faqat siz ko‘rishingiz uchun.</p></details>
+      </div>
+    </section>
+
+    <section class="lp-end" aria-labelledby="lpEndTitle">
+      <h2 class="lp-end-title" id="lpEndTitle" data-t="lpEndTitle">Maktubingiz bir necha daqiqada tayyor bo‘ladi.</h2>
+      <button class="btn btn-light btn-google" type="button" data-signin>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        <span data-t="signInGoogle">Google orqali kirish</span>
+      </button>
+    </section>
+  </section>
+
+  <!-- Signed in, but this account has not ticked the current terms yet (signed in before the box existed, or the terms changed) -->
+  <section class="view" id="view-terms" hidden>
+    <div class="terms-gate">
+      <div class="kaptar terms-dove" data-kaptar="wait"></div>
+      <h1 class="page-title" data-t="termsGateT">Yana bir qadam</h1>
+      <p data-t="termsGateP">Davom etishdan oldin shartlarimiz bilan tanishib chiqing va pastdagi belgini qo‘ying.</p>
+      <label class="agree"><input type="checkbox" id="termsGateOk"><span class="agree-text"></span></label>
+      <button class="btn" id="termsGateBtn" type="button" data-t="termsContinue">Davom etish</button>
+      <p class="error" id="termsGateError" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- His letters -->
+  <section class="view" id="view-home" hidden>
+    <div class="home-head">
+      <h1 class="page-title" data-t="yourLetters">Maktublaringiz</h1>
+      <a class="btn" href="#new" data-t="newLetter">Yangi maktub yozish</a>
+    </div>
+    <p class="error" id="homeError" role="alert"></p>
+    <ul class="letters" id="letters"></ul>
+    <div class="empty" id="lettersEmpty" hidden>
+      <div class="kaptar empty-dove" data-kaptar="wait"></div>
+      <p data-t="empty">Hozircha maktub yo‘q. Birinchisini yozing — bu taxminan uch daqiqa oladi.</p>
+      <a class="btn" href="#new" data-t="writeLetter">Maktub yozish</a>
+    </div>
+  </section>
+
+  <!-- Write a letter: five steps (1 For her, 2 Letter, 3 The date, 4 Look, 5 Send). Only one step shows at a time. -->
+  <section class="view" id="view-create" hidden>
+    <form class="sheet steps-form" id="createForm" novalidate>
+      <h1 class="sheet-title" data-t="sheetTitle">Unga maktub</h1>
+      <p class="sheet-lead" data-t="sheetLead">Bu yerdagi hamma narsa 4 xonali kodingiz bilan qulflanadi. Uni faqat kodni bilgan odam o‘qiy oladi.</p>
+      <p class="draft-note" id="draftNote" role="status" data-t="draftBack" hidden>Tugallanmagan maktubingiz qaytdi, qanday qoldirgan bo‘lsangiz, shunday.</p>
+
+      <nav class="stepbar" id="stepbar" data-t-label="stepsNav" aria-label="Maktub qadamlari">
+        <ol>
+          <li data-step="1"><button type="button" data-go="1"><span class="sb-dot" aria-hidden="true">1</span><span class="sb-name" data-t="st1">Unga</span></button></li>
+          <li data-step="2"><button type="button" data-go="2"><span class="sb-dot" aria-hidden="true">2</span><span class="sb-name" data-t="st2">Maktub</span></button></li>
+          <li data-step="3"><button type="button" data-go="3"><span class="sb-dot" aria-hidden="true">3</span><span class="sb-name" data-t="st3">Uchrashuv</span></button></li>
+          <li data-step="4"><button type="button" data-go="4"><span class="sb-dot" aria-hidden="true">4</span><span class="sb-name" data-t="st4">Ko‘rinish</span></button></li>
+          <li data-step="5"><button type="button" data-go="5"><span class="sb-dot" aria-hidden="true">5</span><span class="sb-name" data-t="st5">Yuborish</span></button></li>
+        </ol>
+      </nav>
+      <div class="step-head">
+        <div>
+          <p class="step-count" id="stepCount"></p>
+          <h2 class="step-title" id="stepTitle" tabindex="-1"></h2>
+        </div>
+        <button class="btn btn-ghost btn-small pv-open" id="pvOpen" type="button" aria-controls="pvCol" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+          <span data-t="stepPreview">Ko‘rish</span>
+        </button>
+      </div>
+
+      <div class="step-body">
+        <div class="step-main">
+
+          <!-- 1. For her -->
+          <section class="step" data-step="1">
+            <div class="part">
+              <h2 data-t="whoT">Kimga?</h2>
+              <p class="help" data-t="whoH">Uning ismi maktubda, taomlar sahifasida va taklifnomada chiqadi.</p>
+              <div class="fields">
+                <label class="field"><span><span data-t="herName">Uning ismi</span></span>
+                  <input class="input" id="girlName" maxlength="30" autocomplete="off" placeholder="X">
+                  <p class="field-error" data-err="girlName"></p>
+                </label>
+                <label class="field"><span><span data-t="yourName">Ismingiz</span> <small data-t="yourNameNote">(maktub imzosi)</small></span>
+                  <input class="input" id="fromName" maxlength="30" autocomplete="given-name" placeholder="Y">
+                  <p class="field-error" data-err="fromName"></p>
+                </label>
+              </div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="codeT">Uning 4 xonali kodi</h2>
+              <p class="help" data-t="codeH">U maktubni ochish uchun shu kodni kiritadi. Kod havolada yo‘q, shuning uchun uni o‘zingiz ayting. U topa oladigan kod tanlang, masalan, tanishgan kuningiz (kun va oy: 1402).</p>
+              <div class="fields">
+                <div class="field"><span id="pinLabel" data-t="code">Kod</span>
+                  <div class="pin" id="pin" role="group" aria-labelledby="pinLabel">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="1">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="2">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="3">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="4">
+                  </div>
+                  <p class="field-error" data-err="pin"></p>
+                </div>
+                <label class="field"><span><span data-t="hintL">Unga ishora</span> <small data-t="hintNote">(ixtiyoriy, kod kiritishdan oldin ko‘rinadi)</small></span>
+                  <input class="input" id="hint" maxlength="60" autocomplete="off" data-t-ph="hintPh" placeholder="Tanishgan kunimiz">
+                </label>
+              </div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="letterLangT">Maktub tili</h2>
+              <p class="help" data-t="letterLangH">Romantik maktub shu tilda bo‘ladi. Tugmalar tilini u o‘zi almashtira oladi.</p>
+              <div class="chips" id="langs" role="radiogroup" data-t-label="letterLangT" aria-label="Maktub tili"></div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="dateT">U o‘qib bo‘lgach</h2>
+              <p class="help" data-t="dateH">Keyin u nima qilsin?</p>
+              <div class="choices three">
+                <label class="choice"><input type="radio" name="ask" value="full" checked><b data-t="dateYes">Taom, kun va vaqt</b><small data-t="dateYesNote">U taomni, keyin taqvimdan kun va vaqtni tanlaydi.</small></label>
+                <label class="choice"><input type="radio" name="ask" value="dish"><b data-t="dateNo">Faqat taom</b><small data-t="dateNoNote">Taqvim yo‘q. Kunni birga kelishasiz.</small></label>
+                <label class="choice"><input type="radio" name="ask" value="none"><b data-t="dateNone">Faqat maktub</b><small data-t="dateNoneNote">Taom ham, taqvim ham yo‘q. U faqat o‘qiydi va javobni yozishmada beradi.</small></label>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. Letter -->
+          <section class="step" data-step="2" hidden>
+            <div class="part">
+              <h2 data-t="styleT">Maktubni tanlang</h2>
+              <p class="help" data-t="styleH">Beshta uslub. Uning ismi o‘zi qo‘yiladi. Pastda o‘qib ko‘ring.</p>
+              <div class="chips" id="styles" role="radiogroup" data-t-label="styleT" aria-label="Maktubni tanlang"></div>
+              <p class="sub-label" id="fontLabel" data-t="fontL">Yozuv</p>
+              <div class="chips font-chips" id="fonts" role="radiogroup" aria-labelledby="fontLabel"></div>
+              <div class="own-box" id="ownBox" hidden>
+                <label class="field"><span data-t="ownL">Maktubni o‘zingiz yozing</span>
+                  <textarea class="input" id="own" rows="9" data-t-ph="ownPh" placeholder="Yurakdan yozing. Yangi qator — yangi abzats."></textarea>
+                </label>
+                <p class="own-meta"><small data-t="ownH">Nima his qilsangiz, shuni yozing. Uning ismi bilan salom va xayrlashuv so‘zlari o‘zi qo‘shiladi.</small></p>
+                <p class="field-error" data-err="own"></p>
+              </div>
+              <div class="letter-preview" id="preview"></div>
+              <label class="field field-note"><span><span data-t="noteL">Oxirgi so‘z (P.S.)</span> <small data-t="noteNote">(ixtiyoriy)</small></span>
+                <textarea class="input" id="note" maxlength="400" data-t-ph="notePh" placeholder="Hazilimga birinchi marta kulganingni hali ham eslayman…"></textarea>
+              </label>
+            </div>
+
+            <div class="part">
+              <h2 data-t="photosT">Unga suratlar</h2>
+              <p class="help" data-t="photosH">Ixtiyoriy. U maktubni ochganda suratlaringiz sahifada chiqib keladi. Uchtagacha.</p>
+              <label class="switch"><input type="checkbox" id="withPhotos"><span class="switch-box" aria-hidden="true"></span><span data-t="photosOn">U maktubni ochganda suratlarimizni ko‘rsat</span></label>
+              <div class="dish-grid couple-grid" id="couple" hidden></div>
+              <p class="field-error" data-err="couple"></p>
+            </div>
+          </section>
+
+          <!-- 3. The date (skipped for "only the letter") -->
+          <section class="step" data-step="3" hidden>
+            <div class="part" id="tripPart">
+              <h2 data-t="tripT">U yerga qanday borasiz?</h2>
+              <p class="help" data-t="tripH">Agar uni o‘zingiz olib ketsangiz, kafe manzili ixtiyoriy va u “Seni o‘zim olib ketaman” degan yozuvni ko‘radi. Agar o‘sha yerda uchrashsangiz, har bir taom uchun joyni kiriting.</p>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="pickup" value="yes" checked><b data-t="pickupYes">Uni o‘zim olib ketaman</b><small data-t="pickupYesNote">Uyidan yoki ishidan. Manzil ixtiyoriy.</small></label>
+                <label class="choice"><input type="radio" name="pickup" value="no"><b data-t="pickupNo">O‘sha yerda uchrashamiz</b><small data-t="pickupNoNote">Joy va manzil majburiy.</small></label>
+              </div>
+            </div>
+
+            <div class="part" id="dishesPart">
+              <h2 data-t="dishesT">Tanlash uchun uchta taom</h2>
+              <p class="help" data-t="dishesH">Har bir taomning suratini galereyadan qo‘shing. U bittasini tanlaydi, qayerga borishingiz shunga bog‘liq.</p>
+              <div class="dish-grid" id="dishes"></div>
+            </div>
+          </section>
+
+          <!-- 4. Look -->
+          <section class="step" data-step="4" hidden>
+            <div class="part">
+              <h2 data-t="openT">U qanday ochadi</h2>
+              <p class="help" data-t="openH">Koddan keyin u birinchi ko‘radigan narsa.</p>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="opening" value="seal" checked><b data-t="open_seal">Mum muhr</b><small data-t="open_sealNote">U muhrni sindiradi.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="dove"><b data-t="open_dove">Kaptar olib keladi</b><small data-t="open_doveNote">Kaptar maktubingizni olib uchib keladi.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="ribbon"><b data-t="open_ribbon">Atlas tasma</b><small data-t="open_ribbonNote">U atlas tasmani yechadi.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="mist"><b data-t="open_mist">Terlagan oyna</b><small data-t="open_mistNote">U oynadagi bug‘ni artadi.</small></label>
+              </div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="themeT">Uning sahifasi foni</h2>
+              <p class="help" data-t="themeH">Maktub ochilishi bilan u buni ko‘radi. Qanday ko‘rinishini telefon namunasida ko‘rasiz.</p>
+              <div class="theme-list" role="radiogroup" aria-label="Background" data-t-label="themeT" aria-label="Uning sahifasi foni">
+                <label class="theme-choice"><input type="radio" name="theme" value="classic" checked><span class="theme-swatch theme-classic" aria-hidden="true"></span><b data-t="theme_classic">Klassik pushti</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="garden"><span class="theme-swatch theme-garden" aria-hidden="true"></span><b data-t="theme_garden">Atirgul bog‘i</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="night"><span class="theme-swatch theme-night" aria-hidden="true"></span><b data-t="theme_night">Yulduzli tun</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="atlas"><span class="theme-swatch theme-atlas" aria-hidden="true"></span><b data-t="theme_atlas">Atlas ipak</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="blossom"><span class="theme-swatch theme-blossom" aria-hidden="true"></span><b data-t="theme_blossom">Bahor gullari</b></label>
+              </div>
+            </div>
+
+            <div class="part" id="secretPart">
+              <h2 id="secretT" data-t="secretT">Sirli konvert</h2>
+              <p class="help" id="secretH" data-t="secretH">Ixtiyoriy. U buni oxirgi sahifada, “ha” deganidan keyin ochadi.</p>
+              <textarea class="input" id="secret" maxlength="600" rows="3" aria-labelledby="secretT" aria-describedby="secretH" data-t-ph="secretPh" placeholder="Aynan o‘sha lahza uchun biror narsa yozing…"></textarea>
+              <button class="link-btn secret-idea" id="secretIdea" type="button" data-t="secretIdea">G‘oya kerakmi?</button>
+            </div>
+          </section>
+
+          <!-- 5. Send: everything at a glance, then seal -->
+          <section class="step" data-step="5" hidden>
+            <div class="part">
+              <h2 data-t="sumT">Tekshiring va muhrlang</h2>
+              <p class="help" data-t="sumH">Hammasini yana bir bor ko‘rib chiqing. Muhrlangan maktubni o‘zgartirib bo‘lmaydi.</p>
+              <div class="summary" id="summary"></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Her phone: follows the step (code screen, letter, dishes, envelope). Beside the form on wide screens, a pop-up on phones. -->
+        <aside class="pv-col" id="pvCol" data-t-label="stepPreview" aria-label="Ko‘rish">
+          <div class="pv-inner">
+            <button class="pv-close" id="pvClose" type="button" data-t-label="close" aria-label="Yopish">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <div class="phone" aria-hidden="true">
+              <div class="phone-view">
+                <div class="phone-screen theme-classic" id="phoneScreen" data-scene="code">
+                  <div class="pv-scene pv-code">
+                    <div class="envelope">
+                      <div class="env-back airmail"><i></i></div>
+                      <div class="env-letter"></div>
+                      <div class="env-pocket"><i></i></div>
+                      <div class="env-flap"><i></i></div>
+                      <span class="seal seal-static"><span>♥</span></span>
+                    </div>
+                    <p class="pv-script" id="pvPinTitle"></p>
+                    <p class="pv-text" id="pvPinLabel"></p>
+                    <p class="hint pv-text" id="pvHint" hidden></p>
+                    <div class="pin pv-pin"><span></span><span></span><span></span><span></span></div>
+                  </div>
+                  <div class="pv-scene pv-letter">
+                    <div class="paper pv-paper letter-preview" id="pvLetter"></div>
+                  </div>
+                  <div class="pv-scene pv-dishes">
+                    <p class="pv-q" id="pvDishesQ"></p>
+                    <div class="pv-stamps" id="pvStamps"></div>
+                  </div>
+                  <div class="pv-scene pv-open">
+                    <p class="env-caption"><span data-t="pvTo">Kimga:</span><span class="script" id="pvName"></span></p>
+                    <div class="envelope">
+                      <div class="env-back airmail"><i></i></div>
+                      <div class="env-letter"></div>
+                      <div class="env-pocket"><i></i></div>
+                      <div class="env-flap"><i></i></div>
+                      <span class="seal seal-static"><span>♥</span></span>
+                    </div>
+                    <div class="paper ps-card">
+                      <p data-t="pvQ">Men bilan uchrashuvga borasanmi?</p>
+                      <div class="ps-btns"><span class="btn btn-small" data-t="pvYes">Ha</span><span class="btn btn-ghost btn-small" data-t="pvNo">Yo‘q</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="pv-cap" id="pvCap"></p>
+          </div>
+        </aside>
+      </div>
+
+      <p class="error form-error" id="formError" role="alert"></p>
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="backBtn" type="button" data-t="stepBack">Orqaga</button>
+        <button class="btn" id="nextBtn" type="button" data-t="stepNext">Keyingi</button>
+        <button class="btn" id="doneBtn" type="submit" data-t="done" hidden>Tayyor</button>
+      </div>
+      <div class="submit-row">
+        <p class="draft-state" id="draftState" aria-live="polite" hidden></p>
+        <div class="submit-links">
+          <a class="link-btn link-cancel" href="#" data-t="cancel">Bekor qilish</a>
+          <button class="link-btn link-cancel" id="startOver" type="button" data-t="startOver" hidden>Boshidan boshlash</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- Link ready -->
+  <section class="view" id="view-done" hidden>
+    <div class="done">
+      <div class="envelope" aria-hidden="true">
+        <div class="env-back airmail"><i></i></div>
+        <div class="env-letter"></div>
+        <div class="env-pocket"><i></i></div>
+        <div class="env-flap"><i></i></div>
+        <span class="seal seal-static"><span>♥</span></span>
+      </div>
+      <h1 class="done-title" data-t="sealed">Muhrlandi</h1>
+      <p id="doneText"></p>
+
+      <div class="pay-box" id="payBox" hidden>
+        <h2 data-t="payT">Bir qadam qoldi: yuborish uchun to‘lang</h2>
+        <p data-t="payText">To‘lovdan so‘ng havola ishlay boshlaydi. Rahmat’ning xavfsiz sahifasida karta (Uzcard, Humo, Visa, Mastercard) yoki Payme, Click, Uzum orqali to‘lang.</p>
+        <ul class="card-marks" aria-label="Uzcard, Humo, Visa, Mastercard">
+          <li>Uzcard</li><li>Humo</li><li>Visa</li><li>Mastercard</li>
+        </ul>
+        <button class="btn" id="payBtn" type="button"></button>
+        <p class="error" id="payError" role="alert"></p>
+        <button class="link-btn" id="checkPayBtn" type="button" data-t="checkAgain" hidden>Qayta tekshirish</button>
+      </div>
+
+      <!-- Two things to give her: 1 the link (send it), 2 the code (say it) -->
+      <div class="link-part" id="linkPart">
+        <p class="in-app-note" id="linkMissing" data-t="linkOtherDevice" hidden>Havola bu maktubni yozgan telefon yoki kompyuteringizda saqlangan. Uni nusxalash uchun saytni o‘sha yerda oching.</p>
+        <p class="in-app-note" id="linkUnsaved" data-t="linkNotSaved" role="alert" hidden>Bu havolani shu qurilmada saqlab bo‘lmadi (internet yo‘qmi?). Uni hozir nusxalab saqlab qo‘ying: usiz bu maktubni qayta yuborib bo‘lmaydi.</p>
+        <section class="done-box" id="linkBox" aria-labelledby="doneSendT">
+          <h2 class="done-step"><span class="done-num" aria-hidden="true">1</span><span id="doneSendT" data-t="doneSendT">Unga shu havolani yuboring</span></h2>
+          <div class="linkbox">
+            <label class="sr-only" for="doneLink" data-t="linkLabel">Maktub havolasi</label>
+            <input id="doneLink" readonly>
+            <button class="btn btn-small" id="copyBtn" type="button" data-t="copyLink">Havolani nusxalash</button>
+          </div>
+          <div class="share-row">
+            <a class="btn btn-ghost btn-small" id="shareTg" target="_blank" rel="noopener">Telegram</a>
+            <a class="btn btn-ghost btn-small" id="shareWa" target="_blank" rel="noopener">WhatsApp</a>
+            <button class="btn btn-ghost btn-small" id="shareMore" type="button" data-t="more" hidden>Yana…</button>
+          </div>
+          <div class="qr-row">
+            <canvas class="qr" id="qrCanvas" role="img" data-t-label="qrLabel" aria-label="Maktub havolasining QR kodi"></canvas>
+            <div class="qr-text">
+              <p data-t="qrNote">Yoki u buni skaner qilsin. Uni otkritkaga chop etsa ham bo‘ladi.</p>
+              <button class="link-btn" id="qrSave" type="button" data-t="qrSave">QR rasmni saqlash</button>
+            </div>
+          </div>
+          <a class="link-btn done-open" id="doneOpen" data-t="openLikeHer">U ko‘radigandek ochish</a>
+        </section>
+        <section class="done-box" aria-labelledby="doneCodeT">
+          <h2 class="done-step"><span class="done-num" aria-hidden="true">2</span><span id="doneCodeT" data-t="doneCodeT">Unga kodni ayting</span></h2>
+          <p class="done-code" id="donePin"></p>
+          <p class="done-code-note" data-t="codeNote">Kod havolada yo‘q. Uni yuzma-yuz yoki alohida xabarda ayting.</p>
+        </section>
+      </div>
+      <a class="btn btn-ghost btn-small" href="#" data-t="backLetters">Maktublarimga qaytish</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="foot-in">
+    <a class="foot-brand" href="../" data-t-label="footHome" aria-label="Maktubim bosh sahifasi">Maktubim</a>
+    <p class="foot-note" data-t="footNote">Har bir maktub yuborilishidan oldin yozgan odamning telefonida qulflanadi. Biz uni o‘qiy olmaymiz.</p>
+    <nav class="foot-links" data-t-label="footNav" aria-label="Sayt havolalari">
+      <a href="../terms.html" data-legal data-t="footTerms">Foydalanish shartlari</a>
+      <a href="../offer.html" data-legal data-t="footOffer">Ommaviy oferta</a>
+      <a href="../privacy.html" data-legal data-t="footPrivacy">Maxfiylik siyosati</a>
+      <a data-support target="_blank" rel="noopener" data-t="footSupport" hidden>Telegramda yordam</a>
+    </nav>
+    <p class="foot-copy">© <span id="footYear">2026</span> Maktubim</p>
+  </div>
+</footer>
+
+<script type="module" src="../js/site.js"></script>
+<script type="module" src="../js/boy.js"></script>
+<script type="module" src="../js/landing.js"></script>
+</body>
+</html>

@@ -276,7 +276,7 @@ const demo = (() => {
       all.payments[tx] = { inviteId: id, amount: l.invite.price, status: 'created', createdAt: Date.now() };
       l.invite.lastTx = tx;
       save(all);
-      return { payUrl: new URL('pay-test.html#' + tx, location.href).href };
+      return { payUrl: new URL('../pay-test.html#' + tx, import.meta.url).href };
     },
     async fakePay(tx, cancel) {
       await pause();

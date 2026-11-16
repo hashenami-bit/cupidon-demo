@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="ru" data-page-lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- seo:start (made by scripts/make-lang-pages.mjs — edit there, not here) -->
+<title>Maktubim — пригласите её на свидание письмом</title>
+<meta name="description" content="Пригласите её на свидание запечатанным письмом: напишите его, добавьте три блюда и отправьте ссылку. Она откроет письмо 4-значным кодом и выберет блюдо и день.">
+<link rel="canonical" href="https://maktubim.uz/ru/">
+<link rel="alternate" hreflang="en" href="https://maktubim.uz/">
+<link rel="alternate" hreflang="uz" href="https://maktubim.uz/uz/">
+<link rel="alternate" hreflang="ru" href="https://maktubim.uz/ru/">
+<link rel="alternate" hreflang="x-default" href="https://maktubim.uz/">
+<meta property="og:site_name" content="Maktubim">
+<meta property="og:title" content="Maktubim — пригласите её на свидание письмом">
+<meta property="og:description" content="Пригласите её на свидание запечатанным письмом: напишите его, добавьте три блюда и отправьте ссылку. Она откроет письмо 4-значным кодом и выберет блюдо и день.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://maktubim.uz/ru/">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="uz_UZ">
+<meta property="og:image" content="https://maktubim.uz/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"Maktubim","url":"https://maktubim.uz/","inLanguage":["en","uz","ru"]},{"@context":"https://schema.org","@type":"WebApplication","name":"Maktubim","url":"https://maktubim.uz/ru/","description":"Пригласите её на свидание запечатанным письмом: напишите его, добавьте три блюда и отправьте ссылку. Она откроет письмо 4-значным кодом и выберет блюдо и день.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","inLanguage":"ru","image":"https://maktubim.uz/img/og.jpg"},{"@context":"https://schema.org","@type":"FAQPage","inLanguage":"ru","mainEntity":[{"@type":"Question","name":"Сколько это стоит?","acceptedAnswer":{"@type":"Answer","text":"На время запуска — бесплатно. Можно отправлять до 10 писем в день."}},{"@type":"Question","name":"Ей нужно регистрироваться?","acceptedAnswer":{"@type":"Answer","text":"Нет. Она открывает вашу ссылку и вводит 4-значный код, который вы ей дадите."}},{"@type":"Question","name":"А если она нажмёт «Нет»?","acceptedAnswer":{"@type":"Answer","text":"Каптар уносит кнопку. С третьей попытки он улетает с ней совсем, и маленькая рука нажимает «Да»."}},{"@type":"Question","name":"Вы можете прочитать моё письмо?","acceptedAnswer":{"@type":"Answer","text":"Нет. Ваш телефон запирает письмо её кодом и секретной частью ссылки ещё до отправки, а эта часть до нас никогда не доходит."}},{"@type":"Question","name":"Сколько работает ссылка?","acceptedAnswer":{"@type":"Answer","text":"120 дней после отправки. Когда она ответит, письмо хранится 150 дней после ответа, затем удаляется."}},{"@type":"Question","name":"Зачем входить через Google?","acceptedAnswer":{"@type":"Answer","text":"Чтобы ваши письма и её ответы сохранялись в вашем аккаунте и видели их только вы."}}]}]</script>
+<!-- seo:end -->
+<meta name="theme-color" content="#F8E3DE">
+<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../fonts/lora-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/great-vibes-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../css/fonts.css">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="demo-ribbon" id="demoRibbon" data-t="demoRibbon" hidden>Демо-режим: письма хранятся только в этом браузере. Чтобы отправлять настоящие ссылки, добавьте ключи Firebase (см. README).</div>
+
+<header class="topbar">
+  <a class="brand" href="#">Maktubim</a>
+  <div class="topbar-right">
+    <nav class="lp-nav" data-t-label="lpNavLabel" aria-label="Разделы главной страницы">
+      <button class="link-btn" type="button" data-scroll="lp-how" data-t="lpNavHow">Как это работает</button>
+      <button class="link-btn" type="button" data-scroll="lp-faq" data-t="lpNavFaq">Вопросы</button>
+    </nav>
+    <div id="uiLang"></div>
+    <div class="user" id="userBox" hidden>
+      <img id="userPhoto" alt="" referrerpolicy="no-referrer">
+      <span id="userName"></span>
+      <button class="link-btn" id="signOutBtn" type="button" data-t="signOut">Выйти</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="view" id="view-loading" hidden><p class="muted center" data-t="loadingApp">Загрузка…</p></section>
+
+  <!-- Signed out: the home page for visitors (hero with a live demo phone, how it works, inside every letter, questions) -->
+  <section class="view landing" id="view-login">
+    <div class="lp-hero">
+      <div class="lp-copy">
+        <h1 class="hero-title" data-t="heroTitle">Пригласите её на свидание письмом, которое она откроет сама.</h1>
+        <p class="hero-sub" data-t="heroSub">Напишите запечатанное письмо, добавьте три блюда и отправьте ей ссылку. Она введёт ваш код, прочитает письмо, выберет блюдо и день и сохранит красивое приглашение.</p>
+        <!-- "I have read the terms": must be ticked before the first sign-in (the server records the date and version) -->
+        <label class="agree" id="agreeBox"><input type="checkbox" id="termsOk"><span class="agree-text"></span></label>
+        <button class="btn btn-light btn-google" id="signInBtn" type="button">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+          <span id="signInLabel" data-t="signInGoogle">Войти через Google</span>
+        </button>
+        <p class="lp-trust" data-t="lpTrust">Бесплатно на время запуска. Ей не нужен аккаунт.</p>
+        <p class="error" id="signInError" role="alert"></p>
+        <p class="in-app-note" id="inAppNote" data-t="inAppBrowser" hidden>Вход через Google не работает внутри Telegram или Instagram. Откройте страницу в Chrome или Safari (меню ⋮ → Открыть в браузере).</p>
+      </div>
+      <figure class="lp-demo">
+        <div class="lp-phone" id="lpPhone" role="group" data-t-label="lpDemoLabel" aria-label="Пример приглашения, который можно попробовать">
+          <div class="lp-screen" data-scene="ask">
+            <div class="lp-scene lp-scene-env" aria-hidden="true">
+              <div class="envelope" aria-hidden="true">
+                <div class="env-back airmail"><i></i></div>
+                <div class="env-letter"></div>
+                <div class="env-pocket"><i></i></div>
+                <div class="env-flap"><i></i></div>
+                <span class="seal seal-static"><span>M</span></span>
+              </div>
+              <p class="lp-for" data-t="lpEnvFor">Письмо для Малики</p>
+            </div>
+            <div class="lp-scene lp-scene-ask">
+              <div class="lp-dove" data-lp-kaptar="shy"></div>
+              <p class="lp-q" data-t="lpAskQ">Малика, пойдёшь со мной на свидание?</p>
+              <div class="lp-btns">
+                <button class="btn lp-yes" type="button" data-t="askYes">Да</button>
+                <button class="btn btn-ghost lp-no" type="button" data-t="askNo">Нет</button>
+              </div>
+              <p class="lp-hint" aria-live="polite"></p>
+            </div>
+            <div class="lp-scene lp-scene-yes">
+              <div class="lp-dove" data-lp-kaptar="dance"></div>
+              <p class="lp-q" data-t="lpSaidYes">Она сказала «Да»!</p>
+              <button class="link-btn lp-again" type="button" data-t="lpAgain">Ещё раз</button>
+            </div>
+          </div>
+        </div>
+        <figcaption class="lp-cap" data-t="lpTry">Попробуйте нажать «Нет»</figcaption>
+      </figure>
+    </div>
+
+    <section class="lp-section" id="lp-how" aria-labelledby="lpHowTitle">
+      <h2 class="lp-title" id="lpHowTitle" data-t="lpHowTitle">Как это работает</h2>
+      <ol class="how">
+        <li><h3 data-t="how1t">Вы пишете</h3><p data-t="how1p">Её имя, 4-значный код, стиль письма и фото трёх блюд.</p></li>
+        <li><h3 data-t="how2t">Она открывает</h3><p data-t="how2p">Она вводит код, ломает печать, читает письмо и выбирает.</p></li>
+        <li><h3 data-t="how3t">Вы встречаетесь</h3><p data-t="how3p">Её ответ вы увидите здесь: блюдо, день и время.</p></li>
+      </ol>
+    </section>
+
+    <section class="lp-section" aria-labelledby="lpWhyTitle">
+      <h2 class="lp-title" id="lpWhyTitle" data-t="lpWhyTitle">В каждом письме</h2>
+      <ul class="lp-feats">
+        <li><img src="../img/doodle/heart.svg" alt="" width="44" height="44"><h3 data-t="lpF1t">Запечатано её кодом</h3><p data-t="lpF1p">Открыть письмо можно только по ссылке и её 4-значному коду. Даже мы не можем его прочитать.</p></li>
+        <li><img src="../img/doodle/trail.svg" alt="" width="44" height="44"><h3 data-t="lpF2t">Доставляет Каптар</h3><p data-t="lpF2p">Наш голубь-почтальон приносит письмо и не даёт нажать «Нет».</p></li>
+        <li><img src="../img/doodle/bow.svg" alt="" width="44" height="44"><h3 data-t="lpF3t">Четыре способа открыть</h3><p data-t="lpF3p">Сургучная печать, голубь, атласная лента или запотевшее окно, которое она протирает пальцем.</p></li>
+        <li><img src="../img/doodle/rose-small.svg" alt="" width="44" height="44"><h3 data-t="lpF4t">План выбирает она</h3><p data-t="lpF4p">Три блюда с вашими фото, затем день и время в календаре.</p></li>
+        <li><img src="../img/doodle/blossom.svg" alt="" width="44" height="44"><h3 data-t="lpF5t">Фото и тайная записка</h3><p data-t="lpF5p">До трёх ваших общих фото и спрятанный конверт с особыми словами.</p></li>
+        <li><img src="../img/doodle/daisy.svg" alt="" width="44" height="44"><h3 data-t="lpF6t">Узбекский, русский, английский</h3><p data-t="lpF6p">Вы пишете на одном языке, а она может переключить экраны на свой.</p></li>
+      </ul>
+    </section>
+
+    <section class="lp-section" id="lp-faq" aria-labelledby="lpFaqTitle">
+      <h2 class="lp-title" id="lpFaqTitle" data-t="lpFaqTitle">Вопросы</h2>
+      <div class="lp-faq">
+        <details><summary data-t="lpQ1">Сколько это стоит?</summary><p data-t="lpA1">На время запуска — бесплатно. Можно отправлять до 10 писем в день.</p></details>
+        <details><summary data-t="lpQ2">Ей нужно регистрироваться?</summary><p data-t="lpA2">Нет. Она открывает вашу ссылку и вводит 4-значный код, который вы ей дадите.</p></details>
+        <details><summary data-t="lpQ3">А если она нажмёт «Нет»?</summary><p data-t="lpA3">Каптар уносит кнопку. С третьей попытки он улетает с ней совсем, и маленькая рука нажимает «Да».</p></details>
+        <details><summary data-t="lpQ4">Вы можете прочитать моё письмо?</summary><p data-t="lpA4">Нет. Ваш телефон запирает письмо её кодом и секретной частью ссылки ещё до отправки, а эта часть до нас никогда не доходит.</p></details>
+        <details><summary data-t="lpQ5">Сколько работает ссылка?</summary><p data-t="lpA5">120 дней после отправки. Когда она ответит, письмо хранится 150 дней после ответа, затем удаляется.</p></details>
+        <details><summary data-t="lpQ6">Зачем входить через Google?</summary><p data-t="lpA6">Чтобы ваши письма и её ответы сохранялись в вашем аккаунте и видели их только вы.</p></details>
+      </div>
+    </section>
+
+    <section class="lp-end" aria-labelledby="lpEndTitle">
+      <h2 class="lp-end-title" id="lpEndTitle" data-t="lpEndTitle">Ваше письмо будет готово через несколько минут.</h2>
+      <button class="btn btn-light btn-google" type="button" data-signin>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        <span data-t="signInGoogle">Войти через Google</span>
+      </button>
+    </section>
+  </section>
+
+  <!-- Signed in, but this account has not ticked the current terms yet (signed in before the box existed, or the terms changed) -->
+  <section class="view" id="view-terms" hidden>
+    <div class="terms-gate">
+      <div class="kaptar terms-dove" data-kaptar="wait"></div>
+      <h1 class="page-title" data-t="termsGateT">Ещё один шаг</h1>
+      <p data-t="termsGateP">Прежде чем продолжить, прочитайте наши условия и отметьте галочку ниже.</p>
+      <label class="agree"><input type="checkbox" id="termsGateOk"><span class="agree-text"></span></label>
+      <button class="btn" id="termsGateBtn" type="button" data-t="termsContinue">Продолжить</button>
+      <p class="error" id="termsGateError" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- His letters -->
+  <section class="view" id="view-home" hidden>
+    <div class="home-head">
+      <h1 class="page-title" data-t="yourLetters">Ваши письма</h1>
+      <a class="btn" href="#new" data-t="newLetter">Написать новое письмо</a>
+    </div>
+    <p class="error" id="homeError" role="alert"></p>
+    <ul class="letters" id="letters"></ul>
+    <div class="empty" id="lettersEmpty" hidden>
+      <div class="kaptar empty-dove" data-kaptar="wait"></div>
+      <p data-t="empty">Писем пока нет. Напишите первое — это займёт около трёх минут.</p>
+      <a class="btn" href="#new" data-t="writeLetter">Написать письмо</a>
+    </div>
+  </section>
+
+  <!-- Write a letter: five steps (1 For her, 2 Letter, 3 The date, 4 Look, 5 Send). Only one step shows at a time. -->
+  <section class="view" id="view-create" hidden>
+    <form class="sheet steps-form" id="createForm" novalidate>
+      <h1 class="sheet-title" data-t="sheetTitle">Письмо для неё</h1>
+      <p class="sheet-lead" data-t="sheetLead">Всё здесь закрывается вашим 4-значным кодом. Прочитать сможет только тот, кто знает код.</p>
+      <p class="draft-note" id="draftNote" role="status" data-t="draftBack" hidden>Ваше неоконченное письмо вернулось — всё как вы оставили.</p>
+
+      <nav class="stepbar" id="stepbar" data-t-label="stepsNav" aria-label="Шаги письма">
+        <ol>
+          <li data-step="1"><button type="button" data-go="1"><span class="sb-dot" aria-hidden="true">1</span><span class="sb-name" data-t="st1">Для неё</span></button></li>
+          <li data-step="2"><button type="button" data-go="2"><span class="sb-dot" aria-hidden="true">2</span><span class="sb-name" data-t="st2">Письмо</span></button></li>
+          <li data-step="3"><button type="button" data-go="3"><span class="sb-dot" aria-hidden="true">3</span><span class="sb-name" data-t="st3">Свидание</span></button></li>
+          <li data-step="4"><button type="button" data-go="4"><span class="sb-dot" aria-hidden="true">4</span><span class="sb-name" data-t="st4">Вид</span></button></li>
+          <li data-step="5"><button type="button" data-go="5"><span class="sb-dot" aria-hidden="true">5</span><span class="sb-name" data-t="st5">Отправка</span></button></li>
+        </ol>
+      </nav>
+      <div class="step-head">
+        <div>
+          <p class="step-count" id="stepCount"></p>
+          <h2 class="step-title" id="stepTitle" tabindex="-1"></h2>
+        </div>
+        <button class="btn btn-ghost btn-small pv-open" id="pvOpen" type="button" aria-controls="pvCol" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+          <span data-t="stepPreview">Просмотр</span>
+        </button>
+      </div>
+
+      <div class="step-body">
+        <div class="step-main">
+
+          <!-- 1. For her -->
+          <section class="step" data-step="1">
+            <div class="part">
+              <h2 data-t="whoT">Кому?</h2>
+              <p class="help" data-t="whoH">Её имя будет в письме, на странице с блюдами и в приглашении.</p>
+              <div class="fields">
+                <label class="field"><span><span data-t="herName">Её имя</span></span>
+                  <input class="input" id="girlName" maxlength="30" autocomplete="off" placeholder="X">
+                  <p class="field-error" data-err="girlName"></p>
+                </label>
+                <label class="field"><span><span data-t="yourName">Ваше имя</span> <small data-t="yourNameNote">(подпись в письме)</small></span>
+                  <input class="input" id="fromName" maxlength="30" autocomplete="given-name" placeholder="Y">
+                  <p class="field-error" data-err="fromName"></p>
+                </label>
+              </div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="codeT">Её 4-значный код</h2>
+              <p class="help" data-t="codeH">Она вводит его, чтобы открыть письмо. Кода нет в ссылке, поэтому скажите его сами. Выберите такой, который она угадает, например день вашего знакомства (день и месяц: 1402).</p>
+              <div class="fields">
+                <div class="field"><span id="pinLabel" data-t="code">Код</span>
+                  <div class="pin" id="pin" role="group" aria-labelledby="pinLabel">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="1">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="2">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="3">
+                    <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="4">
+                  </div>
+                  <p class="field-error" data-err="pin"></p>
+                </div>
+                <label class="field"><span><span data-t="hintL">Подсказка для неё</span> <small data-t="hintNote">(необязательно, видна до ввода кода)</small></span>
+                  <input class="input" id="hint" maxlength="60" autocomplete="off" data-t-ph="hintPh" placeholder="День нашей встречи">
+                </label>
+              </div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="letterLangT">Язык письма</h2>
+              <p class="help" data-t="letterLangH">Романтическое письмо будет на этом языке. Язык кнопок она сможет переключить сама.</p>
+              <div class="chips" id="langs" role="radiogroup" data-t-label="letterLangT" aria-label="Язык письма"></div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="dateT">Когда она прочитает</h2>
+              <p class="help" data-t="dateH">Что ей сделать дальше?</p>
+              <div class="choices three">
+                <label class="choice"><input type="radio" name="ask" value="full" checked><b data-t="dateYes">Блюдо, день и время</b><small data-t="dateYesNote">Она выбирает блюдо, потом день и время в календаре.</small></label>
+                <label class="choice"><input type="radio" name="ask" value="dish"><b data-t="dateNo">Только блюдо</b><small data-t="dateNoNote">Без календаря. День вы согласуете вместе.</small></label>
+                <label class="choice"><input type="radio" name="ask" value="none"><b data-t="dateNone">Только письмо</b><small data-t="dateNoneNote">Без блюд и календаря. Она просто читает и отвечает вам в чате.</small></label>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. Letter -->
+          <section class="step" data-step="2" hidden>
+            <div class="part">
+              <h2 data-t="styleT">Выберите письмо</h2>
+              <p class="help" data-t="styleH">Пять стилей. Её имя подставится само. Прочитайте ниже.</p>
+              <div class="chips" id="styles" role="radiogroup" data-t-label="styleT" aria-label="Выберите письмо"></div>
+              <p class="sub-label" id="fontLabel" data-t="fontL">Почерк</p>
+              <div class="chips font-chips" id="fonts" role="radiogroup" aria-labelledby="fontLabel"></div>
+              <div class="own-box" id="ownBox" hidden>
+                <label class="field"><span data-t="ownL">Напишите письмо сами</span>
+                  <textarea class="input" id="own" rows="9" data-t-ph="ownPh" placeholder="Пишите от сердца. Новая строка — новый абзац."></textarea>
+                </label>
+                <p class="own-meta"><small data-t="ownH">Напишите, что чувствуете. Обращение с её именем и заключительная строка добавятся сами.</small></p>
+                <p class="field-error" data-err="own"></p>
+              </div>
+              <div class="letter-preview" id="preview"></div>
+              <label class="field field-note"><span><span data-t="noteL">Приписка в конце</span> <small data-t="noteNote">(необязательно)</small></span>
+                <textarea class="input" id="note" maxlength="400" data-t-ph="notePh" placeholder="Я до сих пор помню, как ты впервые засмеялась над моей шуткой…"></textarea>
+              </label>
+            </div>
+
+            <div class="part">
+              <h2 data-t="photosT">Фото для неё</h2>
+              <p class="help" data-t="photosH">По желанию. Когда она откроет письмо, ваши фото выпрыгнут на странице. До трёх.</p>
+              <label class="switch"><input type="checkbox" id="withPhotos"><span class="switch-box" aria-hidden="true"></span><span data-t="photosOn">Показать наши фото, когда она откроет письмо</span></label>
+              <div class="dish-grid couple-grid" id="couple" hidden></div>
+              <p class="field-error" data-err="couple"></p>
+            </div>
+          </section>
+
+          <!-- 3. The date (skipped for "only the letter") -->
+          <section class="step" data-step="3" hidden>
+            <div class="part" id="tripPart">
+              <h2 data-t="tripT">Как вы туда доберётесь?</h2>
+              <p class="help" data-t="tripH">Если вы заедете за ней, адрес кафе необязателен, и она увидит «Я заеду за тобой». Если встречаетесь на месте, укажите место для каждого блюда.</p>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="pickup" value="yes" checked><b data-t="pickupYes">Я заеду за ней</b><small data-t="pickupYesNote">Из дома или с работы. Адрес необязателен.</small></label>
+                <label class="choice"><input type="radio" name="pickup" value="no"><b data-t="pickupNo">Встретимся на месте</b><small data-t="pickupNoNote">Место и адрес обязательны.</small></label>
+              </div>
+            </div>
+
+            <div class="part" id="dishesPart">
+              <h2 data-t="dishesT">Три блюда на выбор</h2>
+              <p class="help" data-t="dishesH">Добавьте фото каждого блюда из галереи. Она выберет одно — от этого зависит, куда вы пойдёте.</p>
+              <div class="dish-grid" id="dishes"></div>
+            </div>
+          </section>
+
+          <!-- 4. Look -->
+          <section class="step" data-step="4" hidden>
+            <div class="part">
+              <h2 data-t="openT">Как она его откроет</h2>
+              <p class="help" data-t="openH">Первое, что она увидит после кода.</p>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="opening" value="seal" checked><b data-t="open_seal">Сургучная печать</b><small data-t="open_sealNote">Она сломает печать.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="dove"><b data-t="open_dove">Принесёт голубь</b><small data-t="open_doveNote">Каптар прилетит с вашим письмом.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="ribbon"><b data-t="open_ribbon">Лента из хан-атласа</b><small data-t="open_ribbonNote">Она развяжет шёлковую ленту.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="mist"><b data-t="open_mist">Запотевшее окно</b><small data-t="open_mistNote">Она сотрёт туман со стекла.</small></label>
+              </div>
+            </div>
+
+            <div class="part">
+              <h2 data-t="themeT">Фон её страницы</h2>
+              <p class="help" data-t="themeH">Она увидит его, как только откроется письмо. В просмотре видно, как это выглядит.</p>
+              <div class="theme-list" role="radiogroup" aria-label="Background" data-t-label="themeT" aria-label="Фон её страницы">
+                <label class="theme-choice"><input type="radio" name="theme" value="classic" checked><span class="theme-swatch theme-classic" aria-hidden="true"></span><b data-t="theme_classic">Классика</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="garden"><span class="theme-swatch theme-garden" aria-hidden="true"></span><b data-t="theme_garden">Розовый сад</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="night"><span class="theme-swatch theme-night" aria-hidden="true"></span><b data-t="theme_night">Звёздная ночь</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="atlas"><span class="theme-swatch theme-atlas" aria-hidden="true"></span><b data-t="theme_atlas">Хан-атлас</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="blossom"><span class="theme-swatch theme-blossom" aria-hidden="true"></span><b data-t="theme_blossom">Весенние цветы</b></label>
+              </div>
+            </div>
+
+            <div class="part" id="secretPart">
+              <h2 id="secretT" data-t="secretT">Секретный конверт</h2>
+              <p class="help" id="secretH" data-t="secretH">По желанию. Она откроет его на последней странице, после того как скажет «да».</p>
+              <textarea class="input" id="secret" maxlength="600" rows="3" aria-labelledby="secretT" aria-describedby="secretH" data-t-ph="secretPh" placeholder="Напишите что-то именно для этого момента…"></textarea>
+              <button class="link-btn secret-idea" id="secretIdea" type="button" data-t="secretIdea">Нужна идея?</button>
+            </div>
+          </section>
+
+          <!-- 5. Send: everything at a glance, then seal -->
+          <section class="step" data-step="5" hidden>
+            <div class="part">
+              <h2 data-t="sumT">Проверьте и запечатайте</h2>
+              <p class="help" data-t="sumH">Посмотрите всё ещё раз. Запечатанное письмо изменить нельзя.</p>
+              <div class="summary" id="summary"></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Her phone: follows the step (code screen, letter, dishes, envelope). Beside the form on wide screens, a pop-up on phones. -->
+        <aside class="pv-col" id="pvCol" data-t-label="stepPreview" aria-label="Просмотр">
+          <div class="pv-inner">
+            <button class="pv-close" id="pvClose" type="button" data-t-label="close" aria-label="Закрыть">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <div class="phone" aria-hidden="true">
+              <div class="phone-view">
+                <div class="phone-screen theme-classic" id="phoneScreen" data-scene="code">
+                  <div class="pv-scene pv-code">
+                    <div class="envelope">
+                      <div class="env-back airmail"><i></i></div>
+                      <div class="env-letter"></div>
+                      <div class="env-pocket"><i></i></div>
+                      <div class="env-flap"><i></i></div>
+                      <span class="seal seal-static"><span>♥</span></span>
+                    </div>
+                    <p class="pv-script" id="pvPinTitle"></p>
+                    <p class="pv-text" id="pvPinLabel"></p>
+                    <p class="hint pv-text" id="pvHint" hidden></p>
+                    <div class="pin pv-pin"><span></span><span></span><span></span><span></span></div>
+                  </div>
+                  <div class="pv-scene pv-letter">
+                    <div class="paper pv-paper letter-preview" id="pvLetter"></div>
+                  </div>
+                  <div class="pv-scene pv-dishes">
+                    <p class="pv-q" id="pvDishesQ"></p>
+                    <div class="pv-stamps" id="pvStamps"></div>
+                  </div>
+                  <div class="pv-scene pv-open">
+                    <p class="env-caption"><span data-t="pvTo">Для</span><span class="script" id="pvName"></span></p>
+                    <div class="envelope">
+                      <div class="env-back airmail"><i></i></div>
+                      <div class="env-letter"></div>
+                      <div class="env-pocket"><i></i></div>
+                      <div class="env-flap"><i></i></div>
+                      <span class="seal seal-static"><span>♥</span></span>
+                    </div>
+                    <div class="paper ps-card">
+                      <p data-t="pvQ">Пойдёшь со мной на свидание?</p>
+                      <div class="ps-btns"><span class="btn btn-small" data-t="pvYes">Да</span><span class="btn btn-ghost btn-small" data-t="pvNo">Нет</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="pv-cap" id="pvCap"></p>
+          </div>
+        </aside>
+      </div>
+
+      <p class="error form-error" id="formError" role="alert"></p>
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="backBtn" type="button" data-t="stepBack">Назад</button>
+        <button class="btn" id="nextBtn" type="button" data-t="stepNext">Далее</button>
+        <button class="btn" id="doneBtn" type="submit" data-t="done" hidden>Готово</button>
+      </div>
+      <div class="submit-row">
+        <p class="draft-state" id="draftState" aria-live="polite" hidden></p>
+        <div class="submit-links">
+          <a class="link-btn link-cancel" href="#" data-t="cancel">Отмена</a>
+          <button class="link-btn link-cancel" id="startOver" type="button" data-t="startOver" hidden>Начать заново</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- Link ready -->
+  <section class="view" id="view-done" hidden>
+    <div class="done">
+      <div class="envelope" aria-hidden="true">
+        <div class="env-back airmail"><i></i></div>
+        <div class="env-letter"></div>
+        <div class="env-pocket"><i></i></div>
+        <div class="env-flap"><i></i></div>
+        <span class="seal seal-static"><span>♥</span></span>
+      </div>
+      <h1 class="done-title" data-t="sealed">Запечатано</h1>
+      <p id="doneText"></p>
+
+      <div class="pay-box" id="payBox" hidden>
+        <h2 data-t="payT">Остался один шаг: оплатите отправку</h2>
+        <p data-t="payText">Ссылка заработает после оплаты. Оплатите картой (Uzcard, Humo, Visa, Mastercard) или через Payme, Click, Uzum на защищённой странице Rahmat.</p>
+        <ul class="card-marks" aria-label="Uzcard, Humo, Visa, Mastercard">
+          <li>Uzcard</li><li>Humo</li><li>Visa</li><li>Mastercard</li>
+        </ul>
+        <button class="btn" id="payBtn" type="button"></button>
+        <p class="error" id="payError" role="alert"></p>
+        <button class="link-btn" id="checkPayBtn" type="button" data-t="checkAgain" hidden>Проверить снова</button>
+      </div>
+
+      <!-- Two things to give her: 1 the link (send it), 2 the code (say it) -->
+      <div class="link-part" id="linkPart">
+        <p class="in-app-note" id="linkMissing" data-t="linkOtherDevice" hidden>Ссылка сохранена на телефоне или компьютере, где вы написали это письмо. Откройте сайт там, чтобы скопировать её.</p>
+        <p class="in-app-note" id="linkUnsaved" data-t="linkNotSaved" role="alert" hidden>Эту ссылку не удалось сохранить на этом устройстве (нет интернета?). Скопируйте её сейчас и сохраните: без неё это письмо нельзя будет отправить снова.</p>
+        <section class="done-box" id="linkBox" aria-labelledby="doneSendT">
+          <h2 class="done-step"><span class="done-num" aria-hidden="true">1</span><span id="doneSendT" data-t="doneSendT">Отправьте ей эту ссылку</span></h2>
+          <div class="linkbox">
+            <label class="sr-only" for="doneLink" data-t="linkLabel">Ссылка на письмо</label>
+            <input id="doneLink" readonly>
+            <button class="btn btn-small" id="copyBtn" type="button" data-t="copyLink">Скопировать ссылку</button>
+          </div>
+          <div class="share-row">
+            <a class="btn btn-ghost btn-small" id="shareTg" target="_blank" rel="noopener">Telegram</a>
+            <a class="btn btn-ghost btn-small" id="shareWa" target="_blank" rel="noopener">WhatsApp</a>
+            <button class="btn btn-ghost btn-small" id="shareMore" type="button" data-t="more" hidden>Ещё…</button>
+          </div>
+          <div class="qr-row">
+            <canvas class="qr" id="qrCanvas" role="img" data-t-label="qrLabel" aria-label="QR-код ссылки на письмо"></canvas>
+            <div class="qr-text">
+              <p data-t="qrNote">Или пусть она отсканирует этот код. Его можно распечатать на открытке.</p>
+              <button class="link-btn" id="qrSave" type="button" data-t="qrSave">Сохранить QR-картинку</button>
+            </div>
+          </div>
+          <a class="link-btn done-open" id="doneOpen" data-t="openLikeHer">Открыть, как она</a>
+        </section>
+        <section class="done-box" aria-labelledby="doneCodeT">
+          <h2 class="done-step"><span class="done-num" aria-hidden="true">2</span><span id="doneCodeT" data-t="doneCodeT">Скажите ей код</span></h2>
+          <p class="done-code" id="donePin"></p>
+          <p class="done-code-note" data-t="codeNote">Его нет в ссылке. Скажите его лично или отдельным сообщением.</p>
+        </section>
+      </div>
+      <a class="btn btn-ghost btn-small" href="#" data-t="backLetters">К моим письмам</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="foot-in">
+    <a class="foot-brand" href="../" data-t-label="footHome" aria-label="Главная страница Maktubim">Maktubim</a>
+    <p class="foot-note" data-t="footNote">Каждое письмо запирается на телефоне автора ещё до отправки. Мы не можем его прочитать.</p>
+    <nav class="foot-links" data-t-label="footNav" aria-label="Ссылки сайта">
+      <a href="../terms.html" data-legal data-t="footTerms">Условия использования</a>
+      <a href="../offer.html" data-legal data-t="footOffer">Публичная оферта</a>
+      <a href="../privacy.html" data-legal data-t="footPrivacy">Политика конфиденциальности</a>
+      <a data-support target="_blank" rel="noopener" data-t="footSupport" hidden>Поддержка в Telegram</a>
+    </nav>
+    <p class="foot-copy">© <span id="footYear">2026</span> Maktubim</p>
+  </div>
+</footer>
+
+<script type="module" src="../js/site.js"></script>
+<script type="module" src="../js/boy.js"></script>
+<script type="module" src="../js/landing.js"></script>
+</body>
+</html>

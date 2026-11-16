@@ -3,15 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- seo:start (made by scripts/make-lang-pages.mjs — edit there, not here) -->
 <title>Maktubim — ask her out with a letter</title>
-<meta name="description" content="Write a sealed letter, add three dishes and send her a link. She picks the dish and the day.">
-<meta property="og:title" content="Maktubim 💌">
-<meta property="og:description" content="Write a sealed letter, add three dishes and send her a link.">
+<meta name="description" content="Ask her out with a sealed letter: write it, add three dishes and send her a link. She opens it with a 4-digit code and picks the dish and the day.">
+<link rel="canonical" href="https://maktubim.uz/">
+<link rel="alternate" hreflang="en" href="https://maktubim.uz/">
+<link rel="alternate" hreflang="uz" href="https://maktubim.uz/uz/">
+<link rel="alternate" hreflang="ru" href="https://maktubim.uz/ru/">
+<link rel="alternate" hreflang="x-default" href="https://maktubim.uz/">
+<meta property="og:site_name" content="Maktubim">
+<meta property="og:title" content="Maktubim — ask her out with a letter">
+<meta property="og:description" content="Ask her out with a sealed letter: write it, add three dishes and send her a link. She opens it with a 4-digit code and picks the dish and the day.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://maktubim.uz/">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="uz_UZ">
+<meta property="og:locale:alternate" content="ru_RU">
 <meta property="og:image" content="https://maktubim.uz/img/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"Maktubim","url":"https://maktubim.uz/","inLanguage":["en","uz","ru"]},{"@context":"https://schema.org","@type":"WebApplication","name":"Maktubim","url":"https://maktubim.uz/","description":"Ask her out with a sealed letter: write it, add three dishes and send her a link. She opens it with a 4-digit code and picks the dish and the day.","applicationCategory":"LifestyleApplication","operatingSystem":"Any","inLanguage":"en","image":"https://maktubim.uz/img/og.jpg"},{"@context":"https://schema.org","@type":"FAQPage","inLanguage":"en","mainEntity":[{"@type":"Question","name":"How much does it cost?","acceptedAnswer":{"@type":"Answer","text":"Nothing while we launch. You can send up to 10 letters a day."}},{"@type":"Question","name":"Does she need to sign up?","acceptedAnswer":{"@type":"Answer","text":"No. She opens your link and types the 4-digit code you give her."}},{"@type":"Question","name":"What if she presses “No”?","acceptedAnswer":{"@type":"Answer","text":"Kaptar carries the button away. On the third try he flies off with it, and a little hand presses “Yes”."}},{"@type":"Question","name":"Can you read my letter?","acceptedAnswer":{"@type":"Answer","text":"No. Your phone locks the letter with her code and a secret part of the link before it is sent, and that part never reaches us."}},{"@type":"Question","name":"How long does the link work?","acceptedAnswer":{"@type":"Answer","text":"120 days after you send it. Once she answers, it stays for 150 days after her answer, then it is deleted."}},{"@type":"Question","name":"Why sign in with Google?","acceptedAnswer":{"@type":"Answer","text":"So your letters and her answers are saved to your account, and only you can see them."}}]}]</script>
+<!-- seo:end -->
 <meta name="theme-color" content="#F8E3DE">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/lora-500-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -20,45 +33,45 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="demo-ribbon" id="demoRibbon" data-t="demoRibbon" hidden></div>
+<div class="demo-ribbon" id="demoRibbon" data-t="demoRibbon" hidden>Demo mode: letters are saved in this browser only. Add your Firebase keys to send real links (see README).</div>
 
 <header class="topbar">
   <a class="brand" href="#">Maktubim</a>
   <div class="topbar-right">
-    <nav class="lp-nav" data-t-label="lpNavLabel">
-      <button class="link-btn" type="button" data-scroll="lp-how" data-t="lpNavHow"></button>
-      <button class="link-btn" type="button" data-scroll="lp-faq" data-t="lpNavFaq"></button>
+    <nav class="lp-nav" data-t-label="lpNavLabel" aria-label="Home page sections">
+      <button class="link-btn" type="button" data-scroll="lp-how" data-t="lpNavHow">How it works</button>
+      <button class="link-btn" type="button" data-scroll="lp-faq" data-t="lpNavFaq">Questions</button>
     </nav>
     <div id="uiLang"></div>
     <div class="user" id="userBox" hidden>
       <img id="userPhoto" alt="" referrerpolicy="no-referrer">
       <span id="userName"></span>
-      <button class="link-btn" id="signOutBtn" type="button" data-t="signOut"></button>
+      <button class="link-btn" id="signOutBtn" type="button" data-t="signOut">Sign out</button>
     </div>
   </div>
 </header>
 
 <main class="wrap">
-  <section class="view" id="view-loading"><p class="muted center" data-t="loadingApp"></p></section>
+  <section class="view" id="view-loading" hidden><p class="muted center" data-t="loadingApp">Loading…</p></section>
 
   <!-- Signed out: the home page for visitors (hero with a live demo phone, how it works, inside every letter, questions) -->
-  <section class="view landing" id="view-login" hidden>
+  <section class="view landing" id="view-login">
     <div class="lp-hero">
       <div class="lp-copy">
-        <h1 class="hero-title" data-t="heroTitle"></h1>
-        <p class="hero-sub" data-t="heroSub"></p>
+        <h1 class="hero-title" data-t="heroTitle">Ask her out with a letter she opens herself.</h1>
+        <p class="hero-sub" data-t="heroSub">Write a sealed letter, add three dishes and send her a link. She types your code, reads the letter, picks the dish and the day, and keeps a beautiful invitation.</p>
         <!-- "I have read the terms": must be ticked before the first sign-in (the server records the date and version) -->
         <label class="agree" id="agreeBox"><input type="checkbox" id="termsOk"><span class="agree-text"></span></label>
         <button class="btn btn-light btn-google" id="signInBtn" type="button">
           <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
-          <span id="signInLabel" data-t="signInGoogle"></span>
+          <span id="signInLabel" data-t="signInGoogle">Continue with Google</span>
         </button>
-        <p class="lp-trust" data-t="lpTrust"></p>
+        <p class="lp-trust" data-t="lpTrust">Free while we launch. She doesn’t need an account.</p>
         <p class="error" id="signInError" role="alert"></p>
-        <p class="in-app-note" id="inAppNote" data-t="inAppBrowser" hidden></p>
+        <p class="in-app-note" id="inAppNote" data-t="inAppBrowser" hidden>Google sign-in doesn’t work inside Telegram or Instagram. Open this page in Chrome or Safari (menu ⋮ → Open in browser).</p>
       </div>
       <figure class="lp-demo">
-        <div class="lp-phone" id="lpPhone" role="group" data-t-label="lpDemoLabel">
+        <div class="lp-phone" id="lpPhone" role="group" data-t-label="lpDemoLabel" aria-label="A sample invitation you can try">
           <div class="lp-screen" data-scene="ask">
             <div class="lp-scene lp-scene-env" aria-hidden="true">
               <div class="envelope" aria-hidden="true">
@@ -68,66 +81,66 @@
                 <div class="env-flap"><i></i></div>
                 <span class="seal seal-static"><span>M</span></span>
               </div>
-              <p class="lp-for" data-t="lpEnvFor"></p>
+              <p class="lp-for" data-t="lpEnvFor">A letter for Malika</p>
             </div>
             <div class="lp-scene lp-scene-ask">
               <div class="lp-dove" data-lp-kaptar="shy"></div>
-              <p class="lp-q" data-t="lpAskQ"></p>
+              <p class="lp-q" data-t="lpAskQ">Malika, will you go on a date with me?</p>
               <div class="lp-btns">
-                <button class="btn lp-yes" type="button" data-t="askYes"></button>
-                <button class="btn btn-ghost lp-no" type="button" data-t="askNo"></button>
+                <button class="btn lp-yes" type="button" data-t="askYes">Yes</button>
+                <button class="btn btn-ghost lp-no" type="button" data-t="askNo">No</button>
               </div>
               <p class="lp-hint" aria-live="polite"></p>
             </div>
             <div class="lp-scene lp-scene-yes">
               <div class="lp-dove" data-lp-kaptar="dance"></div>
-              <p class="lp-q" data-t="lpSaidYes"></p>
-              <button class="link-btn lp-again" type="button" data-t="lpAgain"></button>
+              <p class="lp-q" data-t="lpSaidYes">She said yes!</p>
+              <button class="link-btn lp-again" type="button" data-t="lpAgain">Play again</button>
             </div>
           </div>
         </div>
-        <figcaption class="lp-cap" data-t="lpTry"></figcaption>
+        <figcaption class="lp-cap" data-t="lpTry">Try pressing “No”</figcaption>
       </figure>
     </div>
 
     <section class="lp-section" id="lp-how" aria-labelledby="lpHowTitle">
-      <h2 class="lp-title" id="lpHowTitle" data-t="lpHowTitle"></h2>
+      <h2 class="lp-title" id="lpHowTitle" data-t="lpHowTitle">How it works</h2>
       <ol class="how">
-        <li><h3 data-t="how1t"></h3><p data-t="how1p"></p></li>
-        <li><h3 data-t="how2t"></h3><p data-t="how2p"></p></li>
-        <li><h3 data-t="how3t"></h3><p data-t="how3p"></p></li>
+        <li><h3 data-t="how1t">You write</h3><p data-t="how1p">Her name, a 4-digit code, a letter style and photos of three dishes.</p></li>
+        <li><h3 data-t="how2t">She opens</h3><p data-t="how2p">She types the code, breaks the seal, reads your letter and chooses.</p></li>
+        <li><h3 data-t="how3t">You meet</h3><p data-t="how3p">You see her answer here: the dish, the day and the time.</p></li>
       </ol>
     </section>
 
     <section class="lp-section" aria-labelledby="lpWhyTitle">
-      <h2 class="lp-title" id="lpWhyTitle" data-t="lpWhyTitle"></h2>
+      <h2 class="lp-title" id="lpWhyTitle" data-t="lpWhyTitle">Inside every letter</h2>
       <ul class="lp-feats">
-        <li><img src="img/doodle/heart.svg" alt="" width="44" height="44"><h3 data-t="lpF1t"></h3><p data-t="lpF1p"></p></li>
-        <li><img src="img/doodle/trail.svg" alt="" width="44" height="44"><h3 data-t="lpF2t"></h3><p data-t="lpF2p"></p></li>
-        <li><img src="img/doodle/bow.svg" alt="" width="44" height="44"><h3 data-t="lpF3t"></h3><p data-t="lpF3p"></p></li>
-        <li><img src="img/doodle/rose-small.svg" alt="" width="44" height="44"><h3 data-t="lpF4t"></h3><p data-t="lpF4p"></p></li>
-        <li><img src="img/doodle/blossom.svg" alt="" width="44" height="44"><h3 data-t="lpF5t"></h3><p data-t="lpF5p"></p></li>
-        <li><img src="img/doodle/daisy.svg" alt="" width="44" height="44"><h3 data-t="lpF6t"></h3><p data-t="lpF6p"></p></li>
+        <li><img src="img/doodle/heart.svg" alt="" width="44" height="44"><h3 data-t="lpF1t">Sealed with her code</h3><p data-t="lpF1p">Only the link plus her 4-digit code opens it. Not even we can read it.</p></li>
+        <li><img src="img/doodle/trail.svg" alt="" width="44" height="44"><h3 data-t="lpF2t">Kaptar delivers</h3><p data-t="lpF2p">Our dove postman brings the letter and won’t let her press “No”.</p></li>
+        <li><img src="img/doodle/bow.svg" alt="" width="44" height="44"><h3 data-t="lpF3t">Four ways to open</h3><p data-t="lpF3p">A wax seal, the dove, a silk ribbon to untie or a misty window she wipes with a finger.</p></li>
+        <li><img src="img/doodle/rose-small.svg" alt="" width="44" height="44"><h3 data-t="lpF4t">She picks the plan</h3><p data-t="lpF4p">Three dishes with your photos, then a day and a time on the calendar.</p></li>
+        <li><img src="img/doodle/blossom.svg" alt="" width="44" height="44"><h3 data-t="lpF5t">Photos and a secret note</h3><p data-t="lpF5p">Up to three photos of you two and a hidden envelope with extra words.</p></li>
+        <li><img src="img/doodle/daisy.svg" alt="" width="44" height="44"><h3 data-t="lpF6t">Uzbek, Russian, English</h3><p data-t="lpF6p">You write in one language; she can switch the screens to hers.</p></li>
       </ul>
     </section>
 
     <section class="lp-section" id="lp-faq" aria-labelledby="lpFaqTitle">
-      <h2 class="lp-title" id="lpFaqTitle" data-t="lpFaqTitle"></h2>
+      <h2 class="lp-title" id="lpFaqTitle" data-t="lpFaqTitle">Questions</h2>
       <div class="lp-faq">
-        <details><summary data-t="lpQ1"></summary><p data-t="lpA1"></p></details>
-        <details><summary data-t="lpQ2"></summary><p data-t="lpA2"></p></details>
-        <details><summary data-t="lpQ3"></summary><p data-t="lpA3"></p></details>
-        <details><summary data-t="lpQ4"></summary><p data-t="lpA4"></p></details>
-        <details><summary data-t="lpQ5"></summary><p data-t="lpA5"></p></details>
-        <details><summary data-t="lpQ6"></summary><p data-t="lpA6"></p></details>
+        <details><summary data-t="lpQ1">How much does it cost?</summary><p data-t="lpA1">Nothing while we launch. You can send up to 10 letters a day.</p></details>
+        <details><summary data-t="lpQ2">Does she need to sign up?</summary><p data-t="lpA2">No. She opens your link and types the 4-digit code you give her.</p></details>
+        <details><summary data-t="lpQ3">What if she presses “No”?</summary><p data-t="lpA3">Kaptar carries the button away. On the third try he flies off with it, and a little hand presses “Yes”.</p></details>
+        <details><summary data-t="lpQ4">Can you read my letter?</summary><p data-t="lpA4">No. Your phone locks the letter with her code and a secret part of the link before it is sent, and that part never reaches us.</p></details>
+        <details><summary data-t="lpQ5">How long does the link work?</summary><p data-t="lpA5">120 days after you send it. Once she answers, it stays for 150 days after her answer, then it is deleted.</p></details>
+        <details><summary data-t="lpQ6">Why sign in with Google?</summary><p data-t="lpA6">So your letters and her answers are saved to your account, and only you can see them.</p></details>
       </div>
     </section>
 
     <section class="lp-end" aria-labelledby="lpEndTitle">
-      <h2 class="lp-end-title" id="lpEndTitle" data-t="lpEndTitle"></h2>
+      <h2 class="lp-end-title" id="lpEndTitle" data-t="lpEndTitle">Your letter is a few minutes away.</h2>
       <button class="btn btn-light btn-google" type="button" data-signin>
         <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
-        <span data-t="signInGoogle"></span>
+        <span data-t="signInGoogle">Continue with Google</span>
       </button>
     </section>
   </section>
@@ -136,10 +149,10 @@
   <section class="view" id="view-terms" hidden>
     <div class="terms-gate">
       <div class="kaptar terms-dove" data-kaptar="wait"></div>
-      <h1 class="page-title" data-t="termsGateT"></h1>
-      <p data-t="termsGateP"></p>
+      <h1 class="page-title" data-t="termsGateT">One more step</h1>
+      <p data-t="termsGateP">Before you go on, please read our terms and tick the box below.</p>
       <label class="agree"><input type="checkbox" id="termsGateOk"><span class="agree-text"></span></label>
-      <button class="btn" id="termsGateBtn" type="button" data-t="termsContinue"></button>
+      <button class="btn" id="termsGateBtn" type="button" data-t="termsContinue">Continue</button>
       <p class="error" id="termsGateError" role="alert"></p>
     </div>
   </section>
@@ -147,32 +160,32 @@
   <!-- His letters -->
   <section class="view" id="view-home" hidden>
     <div class="home-head">
-      <h1 class="page-title" data-t="yourLetters"></h1>
-      <a class="btn" href="#new" data-t="newLetter"></a>
+      <h1 class="page-title" data-t="yourLetters">Your letters</h1>
+      <a class="btn" href="#new" data-t="newLetter">Write a new letter</a>
     </div>
     <p class="error" id="homeError" role="alert"></p>
     <ul class="letters" id="letters"></ul>
     <div class="empty" id="lettersEmpty" hidden>
       <div class="kaptar empty-dove" data-kaptar="wait"></div>
-      <p data-t="empty"></p>
-      <a class="btn" href="#new" data-t="writeLetter"></a>
+      <p data-t="empty">No letters yet. Write your first one — it takes about three minutes.</p>
+      <a class="btn" href="#new" data-t="writeLetter">Write a letter</a>
     </div>
   </section>
 
   <!-- Write a letter: five steps (1 For her, 2 Letter, 3 The date, 4 Look, 5 Send). Only one step shows at a time. -->
   <section class="view" id="view-create" hidden>
     <form class="sheet steps-form" id="createForm" novalidate>
-      <h1 class="sheet-title" data-t="sheetTitle"></h1>
-      <p class="sheet-lead" data-t="sheetLead"></p>
-      <p class="draft-note" id="draftNote" role="status" data-t="draftBack" hidden></p>
+      <h1 class="sheet-title" data-t="sheetTitle">A letter for her</h1>
+      <p class="sheet-lead" data-t="sheetLead">Everything here is locked with your 4-digit code. Only someone with the code can read it.</p>
+      <p class="draft-note" id="draftNote" role="status" data-t="draftBack" hidden>Your unfinished letter is back, just as you left it.</p>
 
-      <nav class="stepbar" id="stepbar" data-t-label="stepsNav">
+      <nav class="stepbar" id="stepbar" data-t-label="stepsNav" aria-label="Steps of the letter">
         <ol>
-          <li data-step="1"><button type="button" data-go="1"><span class="sb-dot" aria-hidden="true">1</span><span class="sb-name" data-t="st1"></span></button></li>
-          <li data-step="2"><button type="button" data-go="2"><span class="sb-dot" aria-hidden="true">2</span><span class="sb-name" data-t="st2"></span></button></li>
-          <li data-step="3"><button type="button" data-go="3"><span class="sb-dot" aria-hidden="true">3</span><span class="sb-name" data-t="st3"></span></button></li>
-          <li data-step="4"><button type="button" data-go="4"><span class="sb-dot" aria-hidden="true">4</span><span class="sb-name" data-t="st4"></span></button></li>
-          <li data-step="5"><button type="button" data-go="5"><span class="sb-dot" aria-hidden="true">5</span><span class="sb-name" data-t="st5"></span></button></li>
+          <li data-step="1"><button type="button" data-go="1"><span class="sb-dot" aria-hidden="true">1</span><span class="sb-name" data-t="st1">For her</span></button></li>
+          <li data-step="2"><button type="button" data-go="2"><span class="sb-dot" aria-hidden="true">2</span><span class="sb-name" data-t="st2">Letter</span></button></li>
+          <li data-step="3"><button type="button" data-go="3"><span class="sb-dot" aria-hidden="true">3</span><span class="sb-name" data-t="st3">The date</span></button></li>
+          <li data-step="4"><button type="button" data-go="4"><span class="sb-dot" aria-hidden="true">4</span><span class="sb-name" data-t="st4">Look</span></button></li>
+          <li data-step="5"><button type="button" data-go="5"><span class="sb-dot" aria-hidden="true">5</span><span class="sb-name" data-t="st5">Send</span></button></li>
         </ol>
       </nav>
       <div class="step-head">
@@ -182,7 +195,7 @@
         </div>
         <button class="btn btn-ghost btn-small pv-open" id="pvOpen" type="button" aria-controls="pvCol" aria-expanded="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
-          <span data-t="stepPreview"></span>
+          <span data-t="stepPreview">Preview</span>
         </button>
       </div>
 
@@ -192,14 +205,14 @@
           <!-- 1. For her -->
           <section class="step" data-step="1">
             <div class="part">
-              <h2 data-t="whoT"></h2>
-              <p class="help" data-t="whoH"></p>
+              <h2 data-t="whoT">Who is it for?</h2>
+              <p class="help" data-t="whoH">Her name appears in the letter, on the dishes page and on the invitation.</p>
               <div class="fields">
-                <label class="field"><span><span data-t="herName"></span></span>
+                <label class="field"><span><span data-t="herName">Her name</span></span>
                   <input class="input" id="girlName" maxlength="30" autocomplete="off" placeholder="X">
                   <p class="field-error" data-err="girlName"></p>
                 </label>
-                <label class="field"><span><span data-t="yourName"></span> <small data-t="yourNameNote"></small></span>
+                <label class="field"><span><span data-t="yourName">Your name</span> <small data-t="yourNameNote">(signs the letter)</small></span>
                   <input class="input" id="fromName" maxlength="30" autocomplete="given-name" placeholder="Y">
                   <p class="field-error" data-err="fromName"></p>
                 </label>
@@ -207,10 +220,10 @@
             </div>
 
             <div class="part">
-              <h2 data-t="codeT"></h2>
-              <p class="help" data-t="codeH"></p>
+              <h2 data-t="codeT">Her 4-digit code</h2>
+              <p class="help" data-t="codeH">She types it to open the letter. The code is not in the link, so tell it to her yourself. Pick one she can guess, like the day you met (day and month: 1402).</p>
               <div class="fields">
-                <div class="field"><span id="pinLabel" data-t="code"></span>
+                <div class="field"><span id="pinLabel" data-t="code">Code</span>
                   <div class="pin" id="pin" role="group" aria-labelledby="pinLabel">
                     <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="1">
                     <input inputmode="numeric" maxlength="1" autocomplete="off" aria-label="2">
@@ -219,25 +232,25 @@
                   </div>
                   <p class="field-error" data-err="pin"></p>
                 </div>
-                <label class="field"><span><span data-t="hintL"></span> <small data-t="hintNote"></small></span>
-                  <input class="input" id="hint" maxlength="60" autocomplete="off" data-t-ph="hintPh">
+                <label class="field"><span><span data-t="hintL">Hint for her</span> <small data-t="hintNote">(optional, shown before she types)</small></span>
+                  <input class="input" id="hint" maxlength="60" autocomplete="off" data-t-ph="hintPh" placeholder="The day we met">
                 </label>
               </div>
             </div>
 
             <div class="part">
-              <h2 data-t="letterLangT"></h2>
-              <p class="help" data-t="letterLangH"></p>
-              <div class="chips" id="langs" role="radiogroup" data-t-label="letterLangT"></div>
+              <h2 data-t="letterLangT">Letter language</h2>
+              <p class="help" data-t="letterLangH">The romantic letter is written in this language. She can switch the language of the buttons herself.</p>
+              <div class="chips" id="langs" role="radiogroup" data-t-label="letterLangT" aria-label="Letter language"></div>
             </div>
 
             <div class="part">
-              <h2 data-t="dateT"></h2>
-              <p class="help" data-t="dateH"></p>
+              <h2 data-t="dateT">After she reads it</h2>
+              <p class="help" data-t="dateH">What should she do next?</p>
               <div class="choices three">
-                <label class="choice"><input type="radio" name="ask" value="full" checked><b data-t="dateYes"></b><small data-t="dateYesNote"></small></label>
-                <label class="choice"><input type="radio" name="ask" value="dish"><b data-t="dateNo"></b><small data-t="dateNoNote"></small></label>
-                <label class="choice"><input type="radio" name="ask" value="none"><b data-t="dateNone"></b><small data-t="dateNoneNote"></small></label>
+                <label class="choice"><input type="radio" name="ask" value="full" checked><b data-t="dateYes">Dish, day and time</b><small data-t="dateYesNote">She picks a dish, then a day and a time on a calendar.</small></label>
+                <label class="choice"><input type="radio" name="ask" value="dish"><b data-t="dateNo">Only the dish</b><small data-t="dateNoNote">No calendar. You agree on the day together.</small></label>
+                <label class="choice"><input type="radio" name="ask" value="none"><b data-t="dateNone">Only the letter</b><small data-t="dateNoneNote">No dishes, no calendar. She just reads it and answers you in chat.</small></label>
               </div>
             </div>
           </section>
@@ -245,28 +258,28 @@
           <!-- 2. Letter -->
           <section class="step" data-step="2" hidden>
             <div class="part">
-              <h2 data-t="styleT"></h2>
-              <p class="help" data-t="styleH"></p>
-              <div class="chips" id="styles" role="radiogroup" data-t-label="styleT"></div>
-              <p class="sub-label" id="fontLabel" data-t="fontL"></p>
+              <h2 data-t="styleT">Choose the letter</h2>
+              <p class="help" data-t="styleH">Five styles. Her name is filled in for you. Read it below.</p>
+              <div class="chips" id="styles" role="radiogroup" data-t-label="styleT" aria-label="Choose the letter"></div>
+              <p class="sub-label" id="fontLabel" data-t="fontL">Handwriting</p>
               <div class="chips font-chips" id="fonts" role="radiogroup" aria-labelledby="fontLabel"></div>
               <div class="own-box" id="ownBox" hidden>
-                <label class="field"><span data-t="ownL"></span>
-                  <textarea class="input" id="own" rows="9" data-t-ph="ownPh"></textarea>
+                <label class="field"><span data-t="ownL">Write your letter</span>
+                  <textarea class="input" id="own" rows="9" data-t-ph="ownPh" placeholder="Write from the heart. A new line starts a new paragraph."></textarea>
                 </label>
-                <p class="own-meta"><small data-t="ownH"></small></p>
+                <p class="own-meta"><small data-t="ownH">Write what you feel. The greeting with her name and the closing line are added for you.</small></p>
                 <p class="field-error" data-err="own"></p>
               </div>
               <div class="letter-preview" id="preview"></div>
-              <label class="field field-note"><span><span data-t="noteL"></span> <small data-t="noteNote"></small></span>
-                <textarea class="input" id="note" maxlength="400" data-t-ph="notePh"></textarea>
+              <label class="field field-note"><span><span data-t="noteL">A P.S. at the end</span> <small data-t="noteNote">(optional)</small></span>
+                <textarea class="input" id="note" maxlength="400" data-t-ph="notePh" placeholder="I still remember the first time you laughed at my joke…"></textarea>
               </label>
             </div>
 
             <div class="part">
-              <h2 data-t="photosT"></h2>
-              <p class="help" data-t="photosH"></p>
-              <label class="switch"><input type="checkbox" id="withPhotos"><span class="switch-box" aria-hidden="true"></span><span data-t="photosOn"></span></label>
+              <h2 data-t="photosT">Photos for her</h2>
+              <p class="help" data-t="photosH">Optional. When she opens the letter, your photos pop up on the page. Up to three.</p>
+              <label class="switch"><input type="checkbox" id="withPhotos"><span class="switch-box" aria-hidden="true"></span><span data-t="photosOn">Show our photos when she opens the letter</span></label>
               <div class="dish-grid couple-grid" id="couple" hidden></div>
               <p class="field-error" data-err="couple"></p>
             </div>
@@ -275,17 +288,17 @@
           <!-- 3. The date (skipped for "only the letter") -->
           <section class="step" data-step="3" hidden>
             <div class="part" id="tripPart">
-              <h2 data-t="tripT"></h2>
-              <p class="help" data-t="tripH"></p>
+              <h2 data-t="tripT">How will you get there?</h2>
+              <p class="help" data-t="tripH">If you pick her up, the café address is optional and she sees “I’ll pick you up”. If you meet there, add the place for each dish.</p>
               <div class="choices">
-                <label class="choice"><input type="radio" name="pickup" value="yes" checked><b data-t="pickupYes"></b><small data-t="pickupYesNote"></small></label>
-                <label class="choice"><input type="radio" name="pickup" value="no"><b data-t="pickupNo"></b><small data-t="pickupNoNote"></small></label>
+                <label class="choice"><input type="radio" name="pickup" value="yes" checked><b data-t="pickupYes">I’ll pick her up</b><small data-t="pickupYesNote">From home or work. Address is optional.</small></label>
+                <label class="choice"><input type="radio" name="pickup" value="no"><b data-t="pickupNo">We’ll meet there</b><small data-t="pickupNoNote">The place and address are required.</small></label>
               </div>
             </div>
 
             <div class="part" id="dishesPart">
-              <h2 data-t="dishesT"></h2>
-              <p class="help" data-t="dishesH"></p>
+              <h2 data-t="dishesT">Three dishes to choose from</h2>
+              <p class="help" data-t="dishesH">Add a photo of each dish from your gallery. She picks one, and that decides where you go.</p>
               <div class="dish-grid" id="dishes"></div>
             </div>
           </section>
@@ -293,50 +306,50 @@
           <!-- 4. Look -->
           <section class="step" data-step="4" hidden>
             <div class="part">
-              <h2 data-t="openT"></h2>
-              <p class="help" data-t="openH"></p>
+              <h2 data-t="openT">How she opens it</h2>
+              <p class="help" data-t="openH">The first thing she sees after the code.</p>
               <div class="choices">
-                <label class="choice"><input type="radio" name="opening" value="seal" checked><b data-t="open_seal"></b><small data-t="open_sealNote"></small></label>
-                <label class="choice"><input type="radio" name="opening" value="dove"><b data-t="open_dove"></b><small data-t="open_doveNote"></small></label>
-                <label class="choice"><input type="radio" name="opening" value="ribbon"><b data-t="open_ribbon"></b><small data-t="open_ribbonNote"></small></label>
-                <label class="choice"><input type="radio" name="opening" value="mist"><b data-t="open_mist"></b><small data-t="open_mistNote"></small></label>
+                <label class="choice"><input type="radio" name="opening" value="seal" checked><b data-t="open_seal">Wax seal</b><small data-t="open_sealNote">She breaks the seal.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="dove"><b data-t="open_dove">The dove brings it</b><small data-t="open_doveNote">Kaptar flies in with your letter.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="ribbon"><b data-t="open_ribbon">Atlas silk ribbon</b><small data-t="open_ribbonNote">She unties a ribbon of atlas silk.</small></label>
+                <label class="choice"><input type="radio" name="opening" value="mist"><b data-t="open_mist">Misty window</b><small data-t="open_mistNote">She wipes the fog off the glass.</small></label>
               </div>
             </div>
 
             <div class="part">
-              <h2 data-t="themeT"></h2>
-              <p class="help" data-t="themeH"></p>
-              <div class="theme-list" role="radiogroup" aria-label="Background" data-t-label="themeT">
-                <label class="theme-choice"><input type="radio" name="theme" value="classic" checked><span class="theme-swatch theme-classic" aria-hidden="true"></span><b data-t="theme_classic"></b></label>
-                <label class="theme-choice"><input type="radio" name="theme" value="garden"><span class="theme-swatch theme-garden" aria-hidden="true"></span><b data-t="theme_garden"></b></label>
-                <label class="theme-choice"><input type="radio" name="theme" value="night"><span class="theme-swatch theme-night" aria-hidden="true"></span><b data-t="theme_night"></b></label>
-                <label class="theme-choice"><input type="radio" name="theme" value="atlas"><span class="theme-swatch theme-atlas" aria-hidden="true"></span><b data-t="theme_atlas"></b></label>
-                <label class="theme-choice"><input type="radio" name="theme" value="blossom"><span class="theme-swatch theme-blossom" aria-hidden="true"></span><b data-t="theme_blossom"></b></label>
+              <h2 data-t="themeT">Her page background</h2>
+              <p class="help" data-t="themeH">She sees it as soon as the letter opens. The preview shows how it looks.</p>
+              <div class="theme-list" role="radiogroup" aria-label="Background" data-t-label="themeT" aria-label="Her page background">
+                <label class="theme-choice"><input type="radio" name="theme" value="classic" checked><span class="theme-swatch theme-classic" aria-hidden="true"></span><b data-t="theme_classic">Classic blush</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="garden"><span class="theme-swatch theme-garden" aria-hidden="true"></span><b data-t="theme_garden">Rose garden</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="night"><span class="theme-swatch theme-night" aria-hidden="true"></span><b data-t="theme_night">Starry night</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="atlas"><span class="theme-swatch theme-atlas" aria-hidden="true"></span><b data-t="theme_atlas">Atlas silk</b></label>
+                <label class="theme-choice"><input type="radio" name="theme" value="blossom"><span class="theme-swatch theme-blossom" aria-hidden="true"></span><b data-t="theme_blossom">Spring blossoms</b></label>
               </div>
             </div>
 
             <div class="part" id="secretPart">
-              <h2 id="secretT" data-t="secretT"></h2>
-              <p class="help" id="secretH" data-t="secretH"></p>
-              <textarea class="input" id="secret" maxlength="600" rows="3" aria-labelledby="secretT" aria-describedby="secretH" data-t-ph="secretPh"></textarea>
-              <button class="link-btn secret-idea" id="secretIdea" type="button" data-t="secretIdea"></button>
+              <h2 id="secretT" data-t="secretT">A secret envelope</h2>
+              <p class="help" id="secretH" data-t="secretH">Optional. She opens it on the last page, after she says yes.</p>
+              <textarea class="input" id="secret" maxlength="600" rows="3" aria-labelledby="secretT" aria-describedby="secretH" data-t-ph="secretPh" placeholder="Write something just for that moment…"></textarea>
+              <button class="link-btn secret-idea" id="secretIdea" type="button" data-t="secretIdea">Need an idea?</button>
             </div>
           </section>
 
           <!-- 5. Send: everything at a glance, then seal -->
           <section class="step" data-step="5" hidden>
             <div class="part">
-              <h2 data-t="sumT"></h2>
-              <p class="help" data-t="sumH"></p>
+              <h2 data-t="sumT">Check and seal</h2>
+              <p class="help" data-t="sumH">Look through everything once more. A sealed letter can’t be changed.</p>
               <div class="summary" id="summary"></div>
             </div>
           </section>
         </div>
 
         <!-- Her phone: follows the step (code screen, letter, dishes, envelope). Beside the form on wide screens, a pop-up on phones. -->
-        <aside class="pv-col" id="pvCol" data-t-label="stepPreview">
+        <aside class="pv-col" id="pvCol" data-t-label="stepPreview" aria-label="Preview">
           <div class="pv-inner">
-            <button class="pv-close" id="pvClose" type="button" data-t-label="close">
+            <button class="pv-close" id="pvClose" type="button" data-t-label="close" aria-label="Close">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
             <div class="phone" aria-hidden="true">
@@ -363,7 +376,7 @@
                     <div class="pv-stamps" id="pvStamps"></div>
                   </div>
                   <div class="pv-scene pv-open">
-                    <p class="env-caption"><span data-t="pvTo"></span><span class="script" id="pvName"></span></p>
+                    <p class="env-caption"><span data-t="pvTo">To</span><span class="script" id="pvName"></span></p>
                     <div class="envelope">
                       <div class="env-back airmail"><i></i></div>
                       <div class="env-letter"></div>
@@ -372,8 +385,8 @@
                       <span class="seal seal-static"><span>♥</span></span>
                     </div>
                     <div class="paper ps-card">
-                      <p data-t="pvQ"></p>
-                      <div class="ps-btns"><span class="btn btn-small" data-t="pvYes"></span><span class="btn btn-ghost btn-small" data-t="pvNo"></span></div>
+                      <p data-t="pvQ">Will you go on a date with me?</p>
+                      <div class="ps-btns"><span class="btn btn-small" data-t="pvYes">Yes</span><span class="btn btn-ghost btn-small" data-t="pvNo">No</span></div>
                     </div>
                   </div>
                 </div>
@@ -386,15 +399,15 @@
 
       <p class="error form-error" id="formError" role="alert"></p>
       <div class="step-nav">
-        <button class="btn btn-ghost" id="backBtn" type="button" data-t="stepBack"></button>
-        <button class="btn" id="nextBtn" type="button" data-t="stepNext"></button>
-        <button class="btn" id="doneBtn" type="submit" data-t="done" hidden></button>
+        <button class="btn btn-ghost" id="backBtn" type="button" data-t="stepBack">Back</button>
+        <button class="btn" id="nextBtn" type="button" data-t="stepNext">Next</button>
+        <button class="btn" id="doneBtn" type="submit" data-t="done" hidden>Done</button>
       </div>
       <div class="submit-row">
         <p class="draft-state" id="draftState" aria-live="polite" hidden></p>
         <div class="submit-links">
-          <a class="link-btn link-cancel" href="#" data-t="cancel"></a>
-          <button class="link-btn link-cancel" id="startOver" type="button" data-t="startOver" hidden></button>
+          <a class="link-btn link-cancel" href="#" data-t="cancel">Cancel</a>
+          <button class="link-btn link-cancel" id="startOver" type="button" data-t="startOver" hidden>Start over</button>
         </div>
       </div>
     </form>
@@ -410,65 +423,65 @@
         <div class="env-flap"><i></i></div>
         <span class="seal seal-static"><span>♥</span></span>
       </div>
-      <h1 class="done-title" data-t="sealed"></h1>
+      <h1 class="done-title" data-t="sealed">Sealed</h1>
       <p id="doneText"></p>
 
       <div class="pay-box" id="payBox" hidden>
-        <h2 data-t="payT"></h2>
-        <p data-t="payText"></p>
+        <h2 data-t="payT">One step left: pay to send</h2>
+        <p data-t="payText">The link starts working after payment. Pay by card (Uzcard, Humo, Visa, Mastercard) or with Payme, Click or Uzum on the secure Rahmat page.</p>
         <ul class="card-marks" aria-label="Uzcard, Humo, Visa, Mastercard">
           <li>Uzcard</li><li>Humo</li><li>Visa</li><li>Mastercard</li>
         </ul>
         <button class="btn" id="payBtn" type="button"></button>
         <p class="error" id="payError" role="alert"></p>
-        <button class="link-btn" id="checkPayBtn" type="button" data-t="checkAgain" hidden></button>
+        <button class="link-btn" id="checkPayBtn" type="button" data-t="checkAgain" hidden>Check again</button>
       </div>
 
       <!-- Two things to give her: 1 the link (send it), 2 the code (say it) -->
       <div class="link-part" id="linkPart">
-        <p class="in-app-note" id="linkMissing" data-t="linkOtherDevice" hidden></p>
-        <p class="in-app-note" id="linkUnsaved" data-t="linkNotSaved" role="alert" hidden></p>
+        <p class="in-app-note" id="linkMissing" data-t="linkOtherDevice" hidden>The link is saved on the phone or computer where you wrote this letter. Open the site there to copy it.</p>
+        <p class="in-app-note" id="linkUnsaved" data-t="linkNotSaved" role="alert" hidden>This link could not be saved on this device (no internet?). Copy it now and keep it: without it, this letter can’t be sent again.</p>
         <section class="done-box" id="linkBox" aria-labelledby="doneSendT">
-          <h2 class="done-step"><span class="done-num" aria-hidden="true">1</span><span id="doneSendT" data-t="doneSendT"></span></h2>
+          <h2 class="done-step"><span class="done-num" aria-hidden="true">1</span><span id="doneSendT" data-t="doneSendT">Send her this link</span></h2>
           <div class="linkbox">
-            <label class="sr-only" for="doneLink" data-t="linkLabel"></label>
+            <label class="sr-only" for="doneLink" data-t="linkLabel">Link to the letter</label>
             <input id="doneLink" readonly>
-            <button class="btn btn-small" id="copyBtn" type="button" data-t="copyLink"></button>
+            <button class="btn btn-small" id="copyBtn" type="button" data-t="copyLink">Copy link</button>
           </div>
           <div class="share-row">
             <a class="btn btn-ghost btn-small" id="shareTg" target="_blank" rel="noopener">Telegram</a>
             <a class="btn btn-ghost btn-small" id="shareWa" target="_blank" rel="noopener">WhatsApp</a>
-            <button class="btn btn-ghost btn-small" id="shareMore" type="button" data-t="more" hidden></button>
+            <button class="btn btn-ghost btn-small" id="shareMore" type="button" data-t="more" hidden>More…</button>
           </div>
           <div class="qr-row">
-            <canvas class="qr" id="qrCanvas" role="img" data-t-label="qrLabel"></canvas>
+            <canvas class="qr" id="qrCanvas" role="img" data-t-label="qrLabel" aria-label="QR code of the link to the letter"></canvas>
             <div class="qr-text">
-              <p data-t="qrNote"></p>
-              <button class="link-btn" id="qrSave" type="button" data-t="qrSave"></button>
+              <p data-t="qrNote">Or let her scan this. You can also print it on a card.</p>
+              <button class="link-btn" id="qrSave" type="button" data-t="qrSave">Save the QR picture</button>
             </div>
           </div>
-          <a class="link-btn done-open" id="doneOpen" data-t="openLikeHer"></a>
+          <a class="link-btn done-open" id="doneOpen" data-t="openLikeHer">Open it like she will</a>
         </section>
         <section class="done-box" aria-labelledby="doneCodeT">
-          <h2 class="done-step"><span class="done-num" aria-hidden="true">2</span><span id="doneCodeT" data-t="doneCodeT"></span></h2>
+          <h2 class="done-step"><span class="done-num" aria-hidden="true">2</span><span id="doneCodeT" data-t="doneCodeT">Tell her the code</span></h2>
           <p class="done-code" id="donePin"></p>
-          <p class="done-code-note" data-t="codeNote"></p>
+          <p class="done-code-note" data-t="codeNote">It isn’t in the link. Tell her in person or in a separate message.</p>
         </section>
       </div>
-      <a class="btn btn-ghost btn-small" href="#" data-t="backLetters"></a>
+      <a class="btn btn-ghost btn-small" href="#" data-t="backLetters">Back to your letters</a>
     </div>
   </section>
 </main>
 
 <footer class="site-foot">
   <div class="foot-in">
-    <a class="foot-brand" href="./" data-t-label="footHome">Maktubim</a>
-    <p class="foot-note" data-t="footNote"></p>
-    <nav class="foot-links" data-t-label="footNav">
-      <a href="terms.html" data-legal data-t="footTerms"></a>
-      <a href="offer.html" data-legal data-t="footOffer"></a>
-      <a href="privacy.html" data-legal data-t="footPrivacy"></a>
-      <a data-support target="_blank" rel="noopener" data-t="footSupport" hidden></a>
+    <a class="foot-brand" href="./" data-t-label="footHome" aria-label="Maktubim home page">Maktubim</a>
+    <p class="foot-note" data-t="footNote">Every letter is locked on the writer’s phone before it is sent. We cannot read it.</p>
+    <nav class="foot-links" data-t-label="footNav" aria-label="Site links">
+      <a href="terms.html" data-legal data-t="footTerms">Terms of Use</a>
+      <a href="offer.html" data-legal data-t="footOffer">Public offer</a>
+      <a href="privacy.html" data-legal data-t="footPrivacy">Privacy policy</a>
+      <a data-support target="_blank" rel="noopener" data-t="footSupport" hidden>Support in Telegram</a>
     </nav>
     <p class="foot-copy">© <span id="footYear">2026</span> Maktubim</p>
   </div>
