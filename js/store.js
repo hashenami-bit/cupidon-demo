@@ -114,6 +114,27 @@ export const linkKey = () => (DEMO ? demo.linkKey() : callFn('linkKey', {}));
 export const termsStatus = () => (DEMO ? demo.terms() : callFn('terms', {}));
 export const acceptTerms = version => (DEMO ? demo.terms(version) : callFn('terms', { accept: version }));
 export const fakePay = (tx, cancel = false) => (DEMO ? demo.fakePay(tx, cancel) : callFn('fakePay', { tx, cancel }));
+// Admin panel (admin.html): username + password → a 12-hour pass kept only in this tab (sessionStorage).
+// The demo takes demo / demo. No Google sign-in here, so the page never loads Firebase.
+const ADMIN_KEY = 'cupidon.admin.token';
+export const adminSignedIn = () => { try { return !!sessionStorage.getItem(ADMIN_KEY); } catch { return false; } };
+export function adminLogout() { adminToken = null; try { sessionStorage.removeItem(ADMIN_KEY); } catch { /* private mode */ } }
+export async function adminLogin(user, password) {
+  const r = DEMO
+    ? await demo.adminLogin(user, password)
+    : await callFn('adminLogin', { user, password }, { auth: false });
+  try { sessionStorage.setItem(ADMIN_KEY, r.token); } catch { /* private mode: works until the page closes */ }
+  adminToken = r.token;
+  return r;
+}
+let adminToken = null;
+export async function admin(action, data = {}) {
+  let token = adminToken;
+  try { token = sessionStorage.getItem(ADMIN_KEY) || token; } catch { /* private mode */ }
+  if (!token) throw new StoreError('admin-session');
+  if (DEMO) return demo.admin(action, data, token);
+  return callFn('admin' + action, { ...data, token }, { auth: false, timeoutMs: 60000 });
+}
 
 // [{ id, createdAt, status, price, currency, answered, locked, lang, meta }]
 export async function listMine() {
@@ -206,13 +227,53 @@ const demo = (() => {
       return Object.entries(load().letters).map(([id, l]) => ({ id, ...l.invite, meta: l.meta })).sort((a, b) => b.createdAt - a.createdAt);
     },
     async deleteLetter(id) { const all = load(); delete all.letters[id]; save(all); return { ok: true }; },
+    // Same answers as functions/src/admin.js, from this browser's demo letters.
+    async adminLogin(u, p) {
+      await pause();
+      if (u !== 'demo' || p !== 'demo') throw new StoreError('admin-wrong');
+      return { token: 'demo-admin', expiresAt: Date.now() + 12 * 3600e3 };
+    },
+    async admin(action, d, token) {
+      await pause();
+      if (token !== 'demo-admin') throw new StoreError('admin-session');
+      const all = load();
+      const CKEY = 'cupidon.demo.crm';
+      let crm = {};
+      try { crm = JSON.parse(localStorage.getItem(CKEY)) || {}; } catch { /* start empty */ }
+      if (action === 'Overview') {
+        const now = Date.now();
+        return {
+          at: now, today: new Date(now + 5 * 3600 * 1000).toISOString().slice(0, 10),
+          settings: { provider: 'fake', price: PRICE, currency: 'UZS', maxPerDay: 0, maxTotalPerDay: 0, keepDays: 120, unpaidKeepDays: 7 },
+          letters: Object.entries(all.letters).map(([id, l]) => ({ id, invite: { ownerUid: 'demo', ...l.invite }, meta: l.meta || null, lock: l.lock || null })),
+          payments: Object.entries(all.payments || {}).map(([tx, p]) => ({ tx, ownerUid: 'demo', ...p })),
+          customers: [{ uid: 'demo', terms: { version: localStorage.getItem(TKEY), at: null }, crm: crm.demo || null }],
+          accounts: [{ uid: 'demo', email: 'demo@maktubim.test', name: 'Demo', createdAt: now - 864e5, lastSignIn: now, disabled: false }],
+          limitsAll: null
+        };
+      }
+      if (action === 'Unlock') return this.unlockLetter(d.id);
+      if (action === 'Delete') return this.deleteLetter(d.id);
+      if (action === 'SaveCustomer') {
+        const rec = { note: String(d.note || '').trim(), tags: [...new Set((d.tags || []).map(t => String(t).trim().toLowerCase()).filter(Boolean))], updatedAt: Date.now() };
+        crm[d.uid] = rec; localStorage.setItem(CKEY, JSON.stringify(crm));
+        return rec;
+      }
+      if (action === 'MarkRefunded') {
+        const p = all.payments?.[d.tx];
+        if (!p) throw new StoreError('not-found');
+        Object.assign(p, { refundedAt: Date.now(), refundNote: String(d.note || ''), refundedBy: 'demo' }); save(all);
+        return p;
+      }
+      throw new StoreError('unknown');
+    },
     async unlockLetter(id) { const all = load(); const l = own(all, id); l.lock = { fails: 0, totalFails: 0, pausedUntil: 0 }; l.invite.locked = false; save(all); return { ok: true }; },
     async startPayment(id) {
       await pause();
       const all = load(); const l = own(all, id);
       if (l.invite.status === 'active') return { alreadyPaid: true };
       const tx = crypto.randomUUID();
-      all.payments[tx] = { inviteId: id, amount: l.invite.price, status: 'created' };
+      all.payments[tx] = { inviteId: id, amount: l.invite.price, status: 'created', createdAt: Date.now() };
       l.invite.lastTx = tx;
       save(all);
       return { payUrl: new URL('pay-test.html#' + tx, location.href).href };
@@ -222,6 +283,7 @@ const demo = (() => {
       const all = load(); const p = all.payments[tx];
       if (!p) throw new StoreError('not-found');
       p.status = cancel ? 'canceled' : 'succeeded';
+      if (!cancel) p.paidAt = Date.now();
       if (!cancel && all.letters[p.inviteId]) all.letters[p.inviteId].invite.status = 'active';
       save(all);
       return { status: p.status, inviteId: p.inviteId };

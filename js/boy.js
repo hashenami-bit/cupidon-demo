@@ -9,7 +9,7 @@ import { compressImage, COUPLE_PHOTO } from './image.js';
 import { saveDraft, loadDraft, deleteDraft } from './draft.js';
 import { openPhotos } from './lightbox.js';
 import { kaptar } from './kaptar.js';
-import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, isUrl, isMapUrl, linkParam, inAppBrowser, wait, isImageData, downloadBlob } from './common.js';
+import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, isUrl, isMapUrl, linkParam, inAppBrowser, wait, isImageData, downloadBlob, answerShapeOk } from './common.js';
 import { startOf, saveIcs } from './date-tools.js';
 import { drawQR, qrBlob } from './qr.js';
 import { TERMS_VERSION } from './shared/terms.js';
@@ -250,13 +250,6 @@ async function answerOf(id, m) {
   if (!answerShapeOk(a)) throw new Error('bad-answer');   // shown as "unreadable"
   answers.set(id, { sig, a });
   return a;
-}
-// Her answer is locked by her page, but anyone with her link + code can lock anything: only a dish number and a
-// plain date/time (or none) are used here, so nothing odd reaches his calendar file (security scan 2026-11-14, F1).
-function answerShapeOk(a) {
-  if (!a || typeof a !== 'object' || !Number.isInteger(a.dish) || a.dish < 0 || a.dish > 2) return false;
-  if (a.date == null) return a.time == null;
-  return typeof a.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.date) && typeof a.time === 'string' && /^\d{2}:\d{2}$/.test(a.time);
 }
 
 // Each letter is in one of 8 states (a coloured label on its row), and has one main button for that state.

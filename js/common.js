@@ -144,3 +144,12 @@ export function heartBurst(from) {
   document.body.append(box);
   setTimeout(() => box.remove(), 2600);
 }
+
+// Her answer is locked by her page, but anyone with her link + code can lock anything: only a dish number and a
+// plain date/time (or none) are used here, so nothing odd reaches his calendar file (security scan 2026-11-14, F1).
+export function answerShapeOk(a) {
+  if (!a || typeof a !== 'object' || !Number.isInteger(a.dish) || a.dish < 0 || a.dish > 2) return false;
+  if (a.date == null) return a.time == null;
+  return typeof a.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.date) && typeof a.time === 'string' && /^\d{2}:\d{2}$/.test(a.time);
+}
+

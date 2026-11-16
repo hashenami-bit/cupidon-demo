@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Maktubim admin</title>
+<meta name="theme-color" content="#ECE9E4">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/admin.css">
+<script type="module" src="js/admin.js"></script>
+</head>
+<body>
+<header class="ad-top">
+  <a class="ad-brand" href="admin.html#overview"><img src="img/favicon.svg" alt="" width="28" height="28"><span>Maktubim admin</span></a>
+  <p class="ad-demo" id="demoNote" hidden>Demo data from this browser only</p>
+  <div class="ad-who" id="who" hidden>
+        <button type="button" class="ad-btn ad-btn-quiet" id="refreshBtn">Refresh</button>
+    <button type="button" class="ad-btn ad-btn-quiet" id="signOutBtn">Log out</button>
+  </div>
+</header>
+
+<main id="gate" class="ad-gate" hidden>
+  <form class="ad-sheet ad-gate-box" id="loginForm" autocomplete="on">
+    <h1>Admin panel</h1>
+    <p id="gateText">Log in to see letters, customers and payments.</p>
+    <label class="ad-field" for="adminUser">Username
+      <input class="ad-input" id="adminUser" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    </label>
+    <label class="ad-field" for="adminPass">Password
+      <input class="ad-input" id="adminPass" name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit" class="ad-btn ad-btn-main" id="loginBtn">Log in</button>
+    <p id="gateError" class="ad-error" role="alert"></p>
+  </form>
+</main>
+
+<div id="app" class="ad-app" hidden>
+  <nav class="ad-tabs" aria-label="Sections">
+    <a href="#overview" data-tab="overview">Overview</a>
+    <a href="#letters" data-tab="letters">Letters <span class="ad-count" id="cntLetters"></span></a>
+    <a href="#customers" data-tab="customers">Customers <span class="ad-count" id="cntCustomers"></span></a>
+    <a href="#payments" data-tab="payments">Payments <span class="ad-count ad-count-alert" id="cntRefund"></span></a>
+    <a href="#health" data-tab="health">Health</a>
+  </nav>
+
+  <main class="ad-main">
+    <p id="loadError" class="ad-error ad-banner" role="alert" hidden></p>
+    <p id="stamp" class="ad-stamp"></p>
+
+    <section id="tab-overview" class="ad-tab" hidden>
+      <h1>Overview</h1>
+      <div class="ad-kpis" id="kpis"></div>
+      <div class="ad-sheet">
+        <h2>Where letters get to</h2>
+        <p class="ad-lead">Every letter still in the database, by how far it got.</p>
+        <ol class="ad-journey" id="journey"></ol>
+      </div>
+      <div class="ad-grid2">
+        <div class="ad-sheet">
+          <h2>Letters sealed per day</h2>
+          <p class="ad-lead">Last 30 days, Tashkent time</p>
+          <div class="ad-chart" id="chartLetters"></div>
+        </div>
+        <div class="ad-sheet">
+          <h2>Money per day</h2>
+          <p class="ad-lead" id="moneyLead">Paid letters, last 30 days</p>
+          <div class="ad-chart" id="chartMoney"></div>
+        </div>
+      </div>
+      <div class="ad-sheet">
+        <h2>Needs you</h2>
+        <ul class="ad-todo" id="todo"></ul>
+      </div>
+      <p class="ad-foot">Unpaid letters disappear after 7 days, sent ones after 120 days and answered ones 150 days after the answer, so old letters drop out of these numbers.</p>
+    </section>
+
+    <section id="tab-letters" class="ad-tab" hidden>
+      <h1>Letters</h1>
+      <div class="ad-tools">
+        <input type="search" id="letterSearch" class="ad-input" placeholder="Search her name, his name, email, code or id" aria-label="Search letters">
+        <div class="ad-filters" id="letterFilters" role="group" aria-label="Filter by state"></div>
+      </div>
+      <div class="ad-table-wrap"><table class="ad-table" id="letterTable">
+        <thead><tr><th>Sealed</th><th>From → to</th><th>State</th><th>Code</th><th>Her answer</th><th>Customer</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="ad-empty" id="letterEmpty" hidden>No letters match.</p>
+    </section>
+
+    <section id="tab-customers" class="ad-tab" hidden>
+      <h1>Customers</h1>
+      <div class="ad-tools">
+        <input type="search" id="custSearch" class="ad-input" placeholder="Search email, name, tag or note" aria-label="Search customers">
+        <div class="ad-filters" id="custFilters" role="group" aria-label="Filter by tag"></div>
+      </div>
+      <div class="ad-table-wrap"><table class="ad-table" id="custTable">
+        <thead><tr><th>Customer</th><th>Joined</th><th>Last seen</th><th>Letters</th><th>Paid</th><th>Tags and note</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="ad-empty" id="custEmpty" hidden>No customers match.</p>
+    </section>
+
+    <section id="tab-payments" class="ad-tab" hidden>
+      <h1>Payments</h1>
+      <div class="ad-tools">
+        <input type="search" id="paySearch" class="ad-input" placeholder="Search payment id, letter id or email" aria-label="Search payments">
+        <div class="ad-filters" id="payFilters" role="group" aria-label="Filter payments"></div>
+      </div>
+      <div class="ad-table-wrap"><table class="ad-table" id="payTable">
+        <thead><tr><th>Started</th><th>Amount</th><th>State</th><th>Letter</th><th>Customer</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="ad-empty" id="payEmpty" hidden>No payments match.</p>
+    </section>
+
+    <section id="tab-health" class="ad-tab" hidden>
+      <h1>Health</h1>
+      <div class="ad-meters" id="meters"></div>
+      <div class="ad-sheet">
+        <h2>Settings on the server</h2>
+        <dl class="ad-dl" id="settings"></dl>
+      </div>
+      <div class="ad-sheet">
+        <h2>Where to look</h2>
+        <ul class="ad-links">
+          <li><a href="https://console.firebase.google.com/project/cupidon-uz/firestore/usage" target="_blank" rel="noopener noreferrer">Firebase usage</a>: reads, writes and storage used today (free plan: 50,000 reads, 20,000 writes, 1 GB).</li>
+          <li><a href="https://app.netlify.com/sites/cupidon-uz/logs/functions" target="_blank" rel="noopener noreferrer">Netlify function logs</a>: server errors and payment notices.</li>
+          <li><a href="https://app.netlify.com/sites/cupidon-uz/usage" target="_blank" rel="noopener noreferrer">Netlify usage</a>: credits left this month (the site pauses at 300).</li>
+          <li>Server errors and refund alerts also go to the Telegram bot @maktubim_alerts_bot.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="ad-drawer" id="drawer" hidden>
+  <div class="ad-drawer-back" id="drawerBack"></div>
+  <aside class="ad-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+    <div class="ad-drawer-head">
+      <h2 id="drawerTitle"></h2>
+      <button type="button" class="ad-btn ad-btn-quiet" id="drawerClose">Close</button>
+    </div>
+    <div id="drawerBody"></div>
+  </aside>
+</div>
+
+<p class="ad-toast" id="toast" role="status" aria-live="polite"></p>
+</body>
+</html>
