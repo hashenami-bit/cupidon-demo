@@ -14,7 +14,9 @@ SHA-256 of Google's original files (to check a fresh download is the same):
 
 Updating (Dependabot can't do this): download the three files of the new version into a NEW folder
 `firebase-<version>/`, make the same two changes, change `SDK` in `public/js/store.js`, test sign-in, letter list
-and delete in the browser, then remove the old folder.
+and delete in the browser, then remove the old folder. Also open the live home page with Chrome Inspect → Issues:
+there must be no "document.cookie" warning (store.js sets an empty `__FIREBASE_DEFAULTS__` so Firebase skips the cookie;
+the tests run in demo mode and can't see this).
 
 `qrcode-generator-2.0.4/qrcode.js` = QR Code Generator 2.0.4 by Kazuhiko Arase (MIT licence, see the top of the file),
 the file `dist/qrcode.mjs` of the npm package `qrcode-generator@2.0.4`, downloaded 2026-11-14. Content unchanged; only

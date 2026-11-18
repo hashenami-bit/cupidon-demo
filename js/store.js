@@ -24,6 +24,9 @@ const SDK = new URL('../vendor/firebase-10.12.2/', import.meta.url).href;
 let fbPromise = null;
 function fb() {
   fbPromise ??= (async () => {
+    // Firebase looks for extra settings in a global, then in a `__FIREBASE_DEFAULTS__` cookie. We use neither, and
+    // reading document.cookie shows up as a speed warning in Chrome's Issues panel, so an empty global ends the search.
+    globalThis.__FIREBASE_DEFAULTS__ ??= {};
     const [appM, A, F] = await Promise.all([
       import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
     // Sign-in on our own address when it is set up (config.js → authOnSite), otherwise on firebaseapp.com.
