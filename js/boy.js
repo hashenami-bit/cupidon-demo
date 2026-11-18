@@ -502,23 +502,25 @@ function buildDishSlots() {
   dishes.forEach((d, i) => {
     const slot = document.createElement('div');
     slot.className = 'dish-slot';
+    // Every field has a name (Chrome's Issues panel asks for it). The words are chosen so autofill does not offer
+    // his own name or home address for a dish: Title / Venue / MapLink, not name / place / address.
     slot.innerHTML = `
       <h3 class="dish-title"></h3>
       <div class="photo-wrap"><label class="photo-drop">
-        <input type="file" accept="image/*">
+        <input type="file" name="dish${i + 1}Photo" accept="image/*">
         <span class="ph-empty">${PHOTO_ICON}<span data-t="addPhoto"></span></span>
       </label></div>
       <p class="field-error" data-err="photo${i}"></p>
       <label class="field"><span data-t="dishName"></span>
-        <input class="input" data-k="name" maxlength="40" data-t-ph="dishPh${i + 1}">
+        <input class="input" name="dish${i + 1}Title" data-k="name" maxlength="40" data-t-ph="dishPh${i + 1}">
         <p class="field-error" data-err="name${i}"></p>
       </label>
       <label class="field"><span><span data-t="placeL"></span> <small class="req-note"></small></span>
-        <input class="input" data-k="place" maxlength="60" placeholder="${PLACE_PH[i]}">
+        <input class="input" name="dish${i + 1}Venue" data-k="place" maxlength="60" placeholder="${PLACE_PH[i]}">
         <p class="field-error" data-err="place${i}"></p>
       </label>
       <label class="field"><span><span data-t="locL"></span> <small class="req-note"></small></span>
-        <input class="input" data-k="location" maxlength="300" data-t-ph="locPh">
+        <input class="input" name="dish${i + 1}MapLink" data-k="location" maxlength="300" data-t-ph="locPh">
         <p class="field-error" data-err="location${i}"></p>
       </label>`;
     const title = slot.querySelector('.dish-title');
@@ -616,7 +618,7 @@ function buildCouple() {
     slot.innerHTML = `
       <h3 class="dish-title"></h3>
       <div class="photo-wrap"><label class="photo-drop">
-        <input type="file" accept="image/*">
+        <input type="file" name="memory${i + 1}" accept="image/*">
         <span class="ph-empty">${PHOTO_ICON}<span data-t="addPhoto"></span></span>
       </label></div>
       <p class="field-error" data-err="couple${i}"></p>`;
