@@ -18,7 +18,11 @@ export function countdownParts(ms) {
 }
 
 const stamp = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
-const esc = s => String(s || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/[,;]/g, m => '\\' + m);
+// Text values: every kind of line break becomes the two characters \n and every other control character is dropped,
+// so the sender's words can never start a new line in her file (scan 2026-11-17 F3: a lone \r slipped through).
+const esc = s => String(s || '').replace(/\\/g, '\\\\').replace(/\r\n|[\r\n\u0085\u2028\u2029]/g, '\\n')
+  // eslint-disable-next-line no-control-regex -- finding control characters is the point here
+  .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '').replace(/[,;]/g, m => '\\' + m);
 
 // Calendar lines may be at most 75 bytes; longer ones go on the next line after a space (Cyrillic letters are 2 bytes).
 function fold(line) {
