@@ -195,6 +195,7 @@ textarea.ad-input { min-height: 110px; resize: vertical; }
 .ad-mini button { padding: 0; border: 0; background: none; color: var(--claret); cursor: pointer; text-align: left; font: inherit; }
 .ad-form { display: grid; gap: 10px; }
 .ad-form label { font-size: .88rem; color: var(--ink-soft); }
+.ad-late { color: var(--rose); font-weight: 600; }
 .ad-hint { color: var(--ink-soft); font-size: .82rem; margin: 0; }
 
 /* toast */

@@ -5,7 +5,9 @@
 export const DISH_PHOTO = { maxSide: 900, target: 150000 };
 export const COUPLE_PHOTO = { maxSide: 720, target: 65000 };
 export async function compressImage(file, maxSide = DISH_PHOTO.maxSide, target = DISH_PHOTO.target) {
-  if (!file.type.startsWith('image/')) throw new Error('not-image');
+  // Some Android pickers and HEIC files come with an EMPTY type: refuse only a type that is set and is not an image;
+  // the decoder below decides the rest (its error becomes 'bad-format').
+  if (file.type && !file.type.startsWith('image/')) throw new Error('not-image');
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise((resolve, reject) => {

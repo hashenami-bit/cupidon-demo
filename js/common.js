@@ -38,6 +38,20 @@ export function mapsUrl(place, location) {
 // and /ru/, and on the GitHub demo's sub-folder.
 export const siteUrl = path => new URL('../' + path, import.meta.url).href;
 export const inviteLink = (id, secret = '') => siteUrl('invite.html#' + id + (secret ? '.' + secret : ''));
+// His own try of her page: the same link with "?preview=1" before the "#" (not part of the secret). Her page then asks the
+// server not to mark the letter as opened and never sends an answer. The link he copies or shares stays the plain one.
+export const previewLink = link => link.replace('#', '?preview=1#');
+// Is this page load a preview? Only when HIS device says so: the address has "?preview=1" AND he pressed the real "Open it like
+// she will" button a moment ago (a marker in his localStorage, younger than 10 minutes), OR this tab is already a preview (a
+// sessionStorage flag, so a reload keeps it). An address alone is never enough: if he sends her that address by mistake, she
+// still gets the real page and her answer is sent.
+export const PREVIEW_MARK_MS = 10 * 60 * 1000;
+export function isPreview({ search = '', markedAt = null, session = false, now = Date.now() } = {}) {
+  if (session === true) return true;
+  if (new URLSearchParams(search).get('preview') !== '1') return false;
+  const age = now - Number(markedAt);
+  return markedAt != null && Number.isFinite(age) && age >= -1000 && age < PREVIEW_MARK_MS;
+}
 // Reads { id, secret } from her link: "#<id>.<secret>", "#<id>" or the old "?i=<id>".
 export function readInviteLink() {
   const m = location.hash.match(/^#([A-Za-z0-9]{16,40})(?:\.([A-Za-z0-9_-]{16,64}))?/);
@@ -152,6 +166,9 @@ export function heartBurst(from) {
 // plain date/time (or none) are used here, so nothing odd reaches his calendar file (security scan 2026-11-14, F1).
 export function answerShapeOk(a) {
   if (!a || typeof a !== 'object' || !Number.isInteger(a.dish) || a.dish < 0 || a.dish > 2) return false;
+  // Anyone with the link and code can write the answer: an odd "No" count (e.g. an object) once stopped the admin
+  // panel from opening that letter. Old answers have no count at all.
+  if (a.no != null && !(Number.isInteger(a.no) && a.no >= 0 && a.no <= 9999)) return false;
   if (a.date == null) return a.time == null;
   return typeof a.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.date) && typeof a.time === 'string' && /^\d{2}:\d{2}$/.test(a.time);
 }

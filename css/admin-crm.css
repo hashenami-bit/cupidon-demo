@@ -1,0 +1,49 @@
+/* Admin panel: customers (CRM), sortable heads, CSV buttons. Same tokens as admin.css. */
+
+/* sortable column heads: a plain button inside the th, with an arrow so the order is not shown by colour alone */
+.ad-sort { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; white-space: nowrap; }
+.ad-sort:hover { color: var(--claret); }
+.ad-sort::after { content: ' ↕'; opacity: .35; }
+th[aria-sort="ascending"] .ad-sort::after { content: ' ↑'; opacity: 1; }
+th[aria-sort="descending"] .ad-sort::after { content: ' ↓'; opacity: 1; }
+th[aria-sort="ascending"] .ad-sort, th[aria-sort="descending"] .ad-sort { color: var(--ink); font-weight: 600; }
+
+/* the Export CSV button sits under the filters, on the left */
+.ad-tools .ad-btn { justify-self: start; }
+
+/* a follow-up that is due: the word "due" next to the date */
+.crm-due { margin-left: 6px; font-weight: 600; }
+
+/* drawer: follow-up date + Clear on one line */
+.crm-row { display: flex; gap: 8px; align-items: center; }
+.crm-row .ad-input { flex: 1 1 auto; min-width: 0; }
+.crm-copy { margin-top: 10px; }
+
+/* note history */
+.crm-notes { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+.crm-notes li { padding: 10px 12px; border-radius: 8px; background: #FAF8F6; }
+.crm-note-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.crm-note-head .t-sub { color: var(--ink-soft); font-size: .82rem; }
+.crm-del { min-height: 34px; padding: 2px 10px; color: var(--rose); }
+.crm-del.is-armed { background: var(--rose); color: #fff; }
+.crm-note-text { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* timeline: newest first, a thin line down the left */
+.crm-timeline { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); display: grid; gap: 10px; }
+.crm-timeline li { display: grid; gap: 0; }
+.crm-timeline .t-sub { color: var(--ink-soft); font-size: .8rem; }
+.crm-timeline button { padding: 0; border: 0; background: none; color: var(--claret); cursor: pointer; text-align: left; font: inherit; overflow-wrap: anywhere; }
+.crm-timeline span { overflow-wrap: anywhere; }
+
+/* phones: rows become cards, so the sort buttons stay as a wrapped row above them (columns without sorting are left out) */
+@media (max-width: 700px) {
+  .ad-table thead { display: block; }
+  .ad-table thead tr { display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 8px 10px; }
+  .ad-table thead th { display: block; padding: 0; border: 0; }
+  .ad-table thead th:not([data-sort]) { display: none; }
+  .ad-table thead .ad-sort { min-height: 36px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); }
+}
+
+/* Free letters row in the customer drawer: small buttons that wrap on a phone. */
+.crm-free { flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.crm-free .ad-btn { min-width: 52px; }

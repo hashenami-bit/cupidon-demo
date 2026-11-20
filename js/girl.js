@@ -6,18 +6,33 @@ import * as store from './store.js';
 import { deriveKey, decryptJSON, encryptJSON, answerKeyFrom, cryptoReady } from './crypto.js';
 import { FONTS, THEMES, OPENINGS, fontOf, renderLetter, renderOwn } from './letters.js';
 import { tr, dates, dayName, monthYear, guessLang, validLang, applyI18n, langSwitch, savedLang, saveLang } from './i18n.js';
-import { $, $$, pinInput, fmtDM, toISO, pad, parseISO, mapsUrl, isUrl, reducedMotion, wait, readInviteLink, inAppBrowser, heartBurst, isImageData, siteUrl } from './common.js';
+import { $, $$, pinInput, fmtDM, toISO, pad, parseISO, mapsUrl, isUrl, reducedMotion, wait, readInviteLink, inAppBrowser, heartBurst, isImageData, siteUrl, isPreview } from './common.js';
 import { makeBanner, saveCanvas } from './banner.js';
 import { openPhotos } from './lightbox.js';
 import { kaptar, hand, bow } from './kaptar.js';
 import { startOf, countdownParts, saveIcs, googleCalUrl } from './date-tools.js';
 
 const { id, secret: linkSecret } = readInviteLink();   // the secret after the dot is part of her letter's key
+// "?preview=1" = he opens her page from his own screens ("Open it like she will"): the server does not mark the letter
+// as opened and nothing is ever sent as an answer. The marker is not part of the secret; the real link has none.
+const PREVIEW_MARK = 'cupidon.preview.' + id, PREVIEW_TAB = 'cupidon.previewTab.' + id;
+const preview = (() => {
+  let on;
+  try {   // a storage error (private mode) = the real page
+    on = isPreview({ search: location.search, markedAt: localStorage.getItem(PREVIEW_MARK), session: sessionStorage.getItem(PREVIEW_TAB) === '1', now: Date.now() });
+    if (on) { sessionStorage.setItem(PREVIEW_TAB, '1'); localStorage.removeItem(PREVIEW_MARK); }   // the marker works once; a reload of this tab stays a preview
+  } catch { on = false; }
+  // Always take "?preview=1" out of the address (the #id.secret part stays): the address bar, Share and reload show the real link.
+  const q = new URLSearchParams(location.search);
+  if (q.has('preview')) { q.delete('preview'); const s = q.toString(); history.replaceState(history.state, '', location.pathname + (s ? '?' + s : '') + location.hash); }
+  return on;
+})();
 const UI_KEY = 'cupidon.ui.her';
 const herChoice = savedLang(UI_KEY);
 let ui = herChoice || guessLang();
 let letterLang = 'en';
 let inv = null, key = null, answerKey = null, c = null, answer = null;
+let sending = false;   // her answer is on its way: a language switch must not turn the Done button back on
 const pick = { dish: null, date: null, time: null };
 const t = (k, v) => tr(ui, k, v);
 const weekday = iso => dayName(ui, parseISO(iso));
@@ -38,6 +53,7 @@ function rerender() {
   $('#pinError').textContent = '';
   if (inv?.hint) $('#pinHint').textContent = t('hint', { hint: inv.hint });
   if (!c) return;
+  if (sending) { $('#dateDone').disabled = true; $('#dateDone').textContent = t('sending'); }
   $$('[data-dear]').forEach(e => (e.textContent = t('dear', { name: c.girlName })));
   $$('.memory-btn, .stamp-zoom, .stamp-edge').forEach(b => b.setAttribute('aria-label', t('photoZoom')));
   if (ask() === 'none') $('#letterEnd').textContent = t('readEnd', { from: c.from });
@@ -105,7 +121,7 @@ async function tryCode(entered) {
   pin.setDisabled(true);
   $('#pinError').textContent = t('checking');
   try {
-    const r = await store.openLetter(id, entered);
+    const r = await store.openLetter(id, entered, { preview });
     key = await deriveKey(entered, r.content.salt, linkSecret);
     // The server already said the code is right, so a failure here means the link was cut off.
     try { c = await decryptJSON(key, r.content); } catch { throw { reason: 'link-incomplete' }; }
@@ -461,9 +477,10 @@ const play = (el, frames, ms, easing = 'ease-in-out') => el.animate(frames, { du
 const setHint = (key, n = '') => { const h = $('#noHint'); h.dataset.t = key; h.dataset.n = n; h.textContent = t(key, { n }); };
 $('#askNo').addEventListener('click', async () => {
   if (flying || noTries >= 3) return;
+  const run = countRun;
   noTries++;
   noTotal++;
-  try { sessionStorage.setItem(NO_KEY, String(noTotal)); } catch { /* not kept: only the count gets smaller */ }
+  try { if (!preview) sessionStorage.setItem(NO_KEY, String(noTotal)); } catch { /* not kept: only the count gets smaller */ }
   const away = noTries === 3;
   const to = away ? { x: window.innerWidth, y: -260 } : newSpot();
   const target = `translate(${Math.round(to.x)}px, ${Math.round(to.y)}px)`;
@@ -485,7 +502,8 @@ $('#askNo').addEventListener('click', async () => {
   }
   if (!away) { setHint('no' + noTries); return; }
   carrier.style.visibility = 'hidden';   // keeps its place, so "Yes" doesn't move
-  countToYes();
+  // She may have pressed "Yes" herself while the button was flying away: then there is nothing left to count.
+  if (run === countRun && $('#s-ask').classList.contains('is-active')) countToYes();
 });
 
 const FOLD = ['f-pinky', 'f-ring', 'f-middle', 'f-thumb'];   // 5 → 1: the index finger stays up to press "Yes"
@@ -664,11 +682,12 @@ function renderSummary() {
     const day = `${weekday(pick.date)}, ${fmtDM(pick.date)}`;
     s.textContent = pick.time ? t('dayTime', { day, time: pick.time }) : t('dayNoTime', { day });
   }
-  $('#dateDone').disabled = !(pick.date && pick.time);
+  $('#dateDone').disabled = sending || !(pick.date && pick.time);
 }
 
 // Sends her answer (locked with the same key). Returns true when she is done; otherwise writes the reason into errEl.
 async function sendAnswer(errEl) {
+  if (sending) return false;
   errEl.textContent = '';
   const dated = hasDate();
   if (dated && !slotOk(pick.date, pick.time)) {   // the time she picked has passed while she was deciding
@@ -678,14 +697,21 @@ async function sendAnswer(errEl) {
     return false;
   }
   const a = { dish: pick.dish, date: dated ? pick.date : null, time: dated ? pick.time : null, no: noTotal };
+  sending = true;
   try {
-    await store.submitAnswer(id, code, await encryptJSON(answerKey, a));
+    // Preview (his own try): nothing goes to the server, so her one and only answer stays free.
+    if (!preview) await store.submitAnswer(id, code, await encryptJSON(answerKey, a));
   } catch (e) {
-    if (e?.reason === 'already-answered' && await showSavedAnswer()) return true;
-    errEl.textContent = e?.reason === 'already-answered' ? t('alreadyAnswered')
-      : ['wrong-code', 'paused', 'locked', 'not-paid'].includes(e?.reason) ? codeError(e) : t('sendFail');
+    if (e?.reason === 'already-answered') {
+      const saved = await showSavedAnswer();
+      if (saved === 'ok') return true;
+      // Only a real mismatch says "already answered"; a network problem says so and lets her press the button again.
+      errEl.textContent = saved === 'network' ? t('netFail') : t('alreadyAnswered');
+      return false;
+    }
+    errEl.textContent = ['wrong-code', 'paused', 'locked', 'not-paid', 'busy'].includes(e?.reason) ? codeError(e) : t('sendFail');
     return false;
-  }
+  } finally { sending = false; }
   // Sent. From here on nothing may say "not sent": a drawing problem must not hide that her answer arrived.
   answer = a;
   show('final');
@@ -703,15 +729,18 @@ $('#dateDone').addEventListener('click', async () => {
 });
 
 // She already answered (e.g. on another phone): load that answer and show her invitation.
+// Returns 'ok' (shown), 'network' (could not ask: she can press the button again) or 'none' (no readable answer there).
 async function showSavedAnswer() {
+  let r;
+  try { r = await store.openLetter(id, code, { preview }); }
+  catch (e) { return ['network', 'busy'].includes(e?.reason) ? 'network' : 'none'; }
   try {
-    const r = await store.openLetter(id, code);
-    if (!r.answer) return false;
+    if (!r.answer) return 'none';
     answer = await decryptJSON(answerKey, r.answer);
     renderFinal();
     show('final');
-    return true;
-  } catch { return false; }
+    return 'ok';
+  } catch { return 'none'; }
 }
 
 // ---------- 6. invitation ----------
@@ -869,10 +898,12 @@ $('#pictureClose').addEventListener('click', () => { $('#pictureSheet').hidden =
     $('#missingText').textContent = t('needHttps');
     return show('missing');
   }
+  if (preview) { document.body.classList.add('is-preview'); $('#previewBar').hidden = false; }
   try { inv = await store.getCard(id); }
-  catch {
-    $('#missingText').dataset.t = 'netFail';   // stays right when she switches language
-    $('#missingText').textContent = t('netFail');
+  catch (e) {
+    const word = e?.reason === 'busy' ? 'tooFast' : 'netFail';   // a busy server (429): "wait a minute", not "no internet"
+    $('#missingText').dataset.t = word;   // stays right when she switches language
+    $('#missingText').textContent = t(word);
     return show('missing');
   }
   if (!inv) return show('missing');

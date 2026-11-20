@@ -1,0 +1,37 @@
+/* Dashboard (Overview) and the activity list on the Health tab. Colours come from the tokens in admin.css. */
+
+#rangeChips { margin: 0 0 12px; }
+#rangeNote { margin: 0 0 12px; max-width: 70ch; }
+
+/* change vs the period before: arrow + sign carry the meaning, colour only helps */
+.ad-kpi small.kd { font-variant-numeric: tabular-nums; }
+.ad-kpi small.kd-up { color: var(--sage); }
+.ad-kpi small.kd-down { color: var(--rose); }
+.ad-kpi small.kd-new { color: var(--gold); }
+.ad-kpi small.kd-flat { color: var(--ink-soft); }
+.ad-kpi small:not(.kd) { color: var(--ink-soft); }
+
+/* speed: two big figures */
+#speed { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
+.ad-speed b { display: block; font-family: var(--serif); font-weight: 500; font-size: 1.9rem; line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; }
+.ad-speed span { display: block; color: var(--ink); font-size: .9rem; }
+.ad-speed small { color: var(--ink-soft); font-size: .8rem; }
+
+/* split: labelled horizontal bars */
+#split { display: grid; gap: 18px; }
+.hb-title { margin: 0 0 8px; font: 500 .85rem var(--sans); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+.ad-hbars { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ad-hbars li { display: grid; grid-template-columns: 104px minmax(0, 1fr) 92px; align-items: center; gap: 12px; }
+.hb-bar { height: 14px; background: var(--grey-bg); border-radius: 4px; overflow: hidden; }
+.hb-bar i { display: block; height: 100%; width: 0; background: var(--claret); border-radius: 4px; min-width: 2px; }
+.hb-num { text-align: right; font-variant-numeric: tabular-nums; }
+.hb-num small { color: var(--ink-soft); margin-left: 6px; }
+@media (max-width: 560px) {
+  .ad-hbars li { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; }
+  .hb-bar { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (prefers-reduced-motion: no-preference) { .hb-bar i { transition: width .5s cubic-bezier(.2, .7, .2, 1); } }
+
+/* activity list */
+#activitySheet .ad-btn { margin: 8px 0 12px; }
+#activityList li { flex-direction: column; gap: 2px; overflow-wrap: anywhere; }

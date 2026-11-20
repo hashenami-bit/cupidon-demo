@@ -58,7 +58,8 @@
     <li>Daily counters: how many letters you created today, to stop abuse.</li>
     <li>A key for your account: your saved links are locked with it in your browser.</li>
     <li>Your agreement to the terms: the date and the version of the Terms of Use, Public offer and this policy you agreed to with the “I have read” box. It shows that you agreed.</li>
-    <li>Our support notes: if you write to us or a payment needs attention, our team may add a short note and labels to your account (for example, what you asked and what we promised). Only our team sees them. Ask us and we delete them.</li>
+    <li>Our support notes: if you write to us or a payment needs attention, our team may add short dated notes, labels, a status (for example “needs our reply”) and a reminder date to your account (for example, what you asked and what we promised). If we give you free letters, we keep how many you have left. Only our team sees them. Ask us and we delete them.</li>
+    <li>Daily totals: every night we write down how many letters were sealed, opened and answered and how much was paid that day. These are numbers only, with no names, addresses or letter contents, and we keep them after the letters themselves are deleted, to see how the service grows.</li>
   </ul>
   <h3>About each letter</h3>
   <ul>
@@ -88,8 +89,9 @@
   <ul>
     <li>Google (Firebase): sign-in and our database. The database is in the European Union (Belgium).</li>
     <li>Netlify: hosts the website and our server code (USA and its worldwide network).</li>
+    <li>Payment provider Payme (payme.uz, Uzbekistan): handles payments when they are switched on.</li>
     <li>Payment provider Rahmat (JSC “MULTICARD PAYMENT”, Uzbekistan): handles payments when they are switched on.</li>
-    <li>Telegram: delivers technical alerts to our team.</li>
+    <li>Telegram: delivers technical alerts to our team. While payment is manual, our Telegram bot also passes your payment receipt, the order code, your Google account address and your Telegram name to our team’s private Telegram chat. We keep in our database the order code, when the receipt came, your Telegram name and chat number (so the bot can tell you when your letter is on) and Telegram’s id of the receipt file (to spot the same picture sent twice), not the receipt itself. The bot’s records are deleted after 150 days.</li>
   </ul>
   <p>This means your data is stored outside Uzbekistan.</p>
   <p>Only when the recipient presses them:</p>
@@ -152,7 +154,8 @@
     <li>Kunlik hisoblagichlar: bugun nechta maktub yaratganingiz — suiiste’molning oldini olish uchun.</li>
     <li>Hisobingiz kaliti: saqlangan havolalaringiz brauzeringizda shu kalit bilan qulflanadi.</li>
     <li>Shartlarga roziligingiz: «Tanishib chiqdim» belgisi bilan rozilik bildirgan Foydalanish shartlari, Ommaviy oferta va ushbu siyosatning sanasi va tahriri. U rozilik berganingizni tasdiqlaydi.</li>
-    <li>Yordam qaydlarimiz: agar bizga yozsangiz yoki to‘lovda muammo bo‘lsa, jamoamiz hisobingizga qisqa qayd va belgilar qo‘shishi mumkin (masalan, nima so‘raganingiz va nima va’da qilganimiz). Ularni faqat jamoamiz ko‘radi. So‘rasangiz, o‘chirib tashlaymiz.</li>
+    <li>Yordam qaydlarimiz: agar bizga yozsangiz yoki to‘lovda muammo bo‘lsa, jamoamiz hisobingizga sanasi ko‘rsatilgan qisqa qaydlar, belgilar, holat (masalan, «javobimiz kerak») va eslatma sanasini qo‘shishi mumkin (masalan, nima so‘raganingiz va nima va’da qilganimiz). Sizga bepul maktublar bersak, nechtasi qolganini saqlaymiz. Ularni faqat jamoamiz ko‘radi. So‘rasangiz, o‘chirib tashlaymiz.</li>
+    <li>Kunlik jami sonlar: har kecha o‘sha kuni nechta maktub muhrlangani, ochilgani va javob berilgani hamda qancha to‘langanini yozib qo‘yamiz. Bu faqat sonlar: ismlar, manzillar va maktub mazmuni yo‘q. Xizmat qanday o‘sayotganini ko‘rish uchun ularni maktublarning o‘zi o‘chirilgandan keyin ham saqlaymiz.</li>
   </ul>
   <h3>Har bir maktub haqida</h3>
   <ul>
@@ -182,8 +185,9 @@
   <ul>
     <li>Google (Firebase): saytga kirish va ma’lumotlar bazamiz. Baza Yevropa Ittifoqida (Belgiya) joylashgan.</li>
     <li>Netlify: sayt va server kodimizni joylashtiradi (AQSh va uning butun dunyodagi tarmog‘i).</li>
+    <li>To‘lov xizmati Payme (payme.uz, O‘zbekiston): to‘lovlar yoqilganda ularni amalga oshiradi.</li>
     <li>To‘lov xizmati Rahmat (“MULTICARD PAYMENT” AJ, O‘zbekiston): to‘lovlar yoqilganda ularni amalga oshiradi.</li>
-    <li>Telegram: jamoamizga texnik xabarlarni yetkazadi.</li>
+    <li>Telegram: jamoamizga texnik xabarlarni yetkazadi. To‘lov qo‘lda qabul qilinayotgan paytda Telegram botimiz to‘lov chekingizni, buyurtma kodini, Google hisobingiz manzilini va Telegram nomingizni jamoamizning yopiq Telegram chatiga uzatadi. Bazamizda chekning o‘zi emas, buyurtma kodi, chek kelgan vaqt, Telegram nomingiz va chat raqamingiz (bot maktubingiz yoqilganini aytishi uchun) hamda chek faylining Telegramdagi identifikatori (bir xil rasm ikki marta yuborilganini aniqlash uchun) saqlanadi. Botning yozuvlari 150 kundan keyin o‘chiriladi.</li>
   </ul>
   <p>Demak, ma’lumotlaringiz O‘zbekistondan tashqarida saqlanadi.</p>
   <p>Faqat qabul qiluvchi o‘zi bosganda:</p>
@@ -246,7 +250,8 @@
     <li>Дневные счётчики: сколько писем вы создали сегодня — чтобы не допустить злоупотреблений.</li>
     <li>Ключ вашего аккаунта: им в вашем браузере запираются сохранённые ссылки.</li>
     <li>Ваше согласие с условиями: дата и редакция Условий использования, Публичной оферты и этой политики, которые вы приняли галочкой «Я прочитал(а) и принимаю». Это подтверждает ваше согласие.</li>
-    <li>Наши заметки поддержки: если вы нам напишете или с оплатой что-то не так, наша команда может добавить к вашему аккаунту короткую заметку и метки (например, о чём вы спросили и что мы пообещали). Их видит только наша команда. Попросите — и мы их удалим.</li>
+    <li>Наши заметки поддержки: если вы нам напишете или с оплатой что-то не так, наша команда может добавить к вашему аккаунту короткие заметки с датой, метки, статус (например, «нужен наш ответ») и дату напоминания (например, о чём вы спросили и что мы пообещали). Если мы подарим вам бесплатные письма, мы храним, сколько их осталось. Их видит только наша команда. Попросите — и мы их удалим.</li>
+    <li>Ежедневные итоги: каждую ночь мы записываем, сколько писем за день запечатали, открыли и на сколько ответили, а также сколько было оплачено. Это только числа — без имён, адресов и содержания писем. Мы храним их и после удаления самих писем, чтобы видеть, как растёт сервис.</li>
   </ul>
   <h3>О каждом письме</h3>
   <ul>
@@ -276,8 +281,9 @@
   <ul>
     <li>Google (Firebase): вход и наша база данных. База находится в Евросоюзе (Бельгия).</li>
     <li>Netlify: размещает сайт и наш серверный код (США и его мировая сеть).</li>
+    <li>Платёжный сервис Payme (payme.uz, Узбекистан): проводит платежи, когда они включены.</li>
     <li>Платёжный сервис Rahmat (АО «MULTICARD PAYMENT», Узбекистан): проводит платежи, когда они включены.</li>
-    <li>Telegram: доставляет технические уведомления нашей команде.</li>
+    <li>Telegram: доставляет технические уведомления нашей команде. Пока оплата принимается вручную, наш Telegram-бот также передаёт ваш чек об оплате, код заказа, адрес вашего Google-аккаунта и ваше имя в Telegram в закрытый Telegram-чат нашей команды. В нашей базе хранятся код заказа, время получения чека, ваше имя в Telegram и номер чата (чтобы бот сообщил, когда письмо включено) и идентификатор файла чека в Telegram (чтобы заметить одну и ту же картинку дважды), но не сам чек. Записи бота удаляются через 150 дней.</li>
   </ul>
   <p>Поэтому ваши данные хранятся за пределами Узбекистана.</p>
   <p>Только когда получатель сам нажимает:</p>

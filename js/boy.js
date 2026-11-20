@@ -9,7 +9,7 @@ import { compressImage, COUPLE_PHOTO } from './image.js';
 import { saveDraft, loadDraft, deleteDraft } from './draft.js';
 import { openPhotos } from './lightbox.js';
 import { kaptar } from './kaptar.js';
-import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, siteUrl, isUrl, isMapUrl, linkParam, inAppBrowser, wait, isImageData, downloadBlob, answerShapeOk } from './common.js';
+import { $, $$, pinInput, toast, copyText, fmtDM, fmtMs, seenParts, parseISO, inviteLink, siteUrl, isUrl, isMapUrl, linkParam, inAppBrowser, wait, isImageData, downloadBlob, answerShapeOk, previewLink } from './common.js';
 import { startOf, saveIcs } from './date-tools.js';
 import { drawQR, qrBlob } from './qr.js';
 import { TERMS_VERSION } from './shared/terms.js';
@@ -29,6 +29,9 @@ const t = (k, v) => tr(ui, k, v);
 
 let user;            // undefined = still loading, null = signed out
 let lastSealed = null;
+let payMode = 'online';   // 'manual' = he pays by card transfer and sends the receipt in Telegram (from store.linkKey)
+let manualInfo = null;   // { id, card, cardName, amount, code, botUrl } of the letter whose transfer details are on screen
+let freeLeft = 0;    // free letters the admin gave this account (from store.linkKey); only matters while letters cost money
 
 // The link secret of each letter is kept only on this device (it is never sent to the server), locked with
 // a key the server gives only to him after sign-in (store.linkKey). After sign-out the next person on a
@@ -43,12 +46,24 @@ async function getLinksLock() {
   if (!linksLock) {
     const uid = linksUid;
     try {
-      const key = await answerKeyFrom((await store.linkKey()).key);
-      if (uid === linksUid) linksLock = key;   // a key fetched for someone who has signed out meanwhile is thrown away
+      const got = await store.linkKey();
+      const key = await answerKeyFrom(got.key);
+      if (uid === linksUid) { linksLock = key; freeLeft = got.freeLetters || 0; payMode = got.payMode === 'manual' ? 'manual' : 'online'; }   // a key fetched for someone who has signed out meanwhile is thrown away
     } catch { /* offline */ }
   }
   return linksLock;
 }
+// An unreadable box would be overwritten by the next save and every older link would be lost for good: keep it first, and tell him.
+// The first one is kept as ".bad" and never replaced; a later different one goes to ".bad2" (at most these two), so the notice stays true.
+function backUpBad(uid, box) {
+  try {
+    const text = JSON.stringify(box), a = 'cupidon.links.' + uid + '.bad', b = a + '2';
+    if (localStorage.getItem(a) !== text && localStorage.getItem(b) !== text) localStorage.setItem(localStorage.getItem(a) === null ? a : b, text);
+  } catch { /* full or private mode */ }
+  if (uid === linksUid) $('#linksNote').hidden = false;
+}
+// Letters deleted in this tab: a save must not bring them back from the box another tab wrote.
+const deletedIds = new Set();
 // Reads the saved (locked) secrets into `links` once. False while the key can't be had: then nothing may be saved,
 // or the saved secrets would be overwritten by an almost empty list.
 async function mergeStored() {
@@ -56,16 +71,32 @@ async function mergeStored() {
   const uid = linksUid, box = readJSON('cupidon.links.' + uid);
   if (box && !await getLinksLock()) return false;
   let saved = {};
-  if (box) { try { saved = await decryptJSON(linksLock, box); } catch { /* unreadable: start again */ } }
+  if (box) {
+    try { saved = await decryptJSON(linksLock, box); }
+    catch {
+      backUpBad(uid, box);   // unreadable (another key, damaged): kept before a save can overwrite it
+    }
+  }
   if (uid !== linksUid) return false;   // signed out meanwhile
   links = { ...saved, ...links };
   return (linksOpened = true);
 }
 async function openLinks(uid) { links = {}; linksUid = uid; linksLock = null; linksOpened = false; await mergeStored(); }
-function closeLinks() { links = {}; linksUid = null; linksLock = null; linksOpened = false; linksReady = Promise.resolve(); }
+function closeLinks() { $('#linksNote').hidden = true; deletedIds.clear(); links = {}; linksUid = null; linksLock = null; linksOpened = false; linksReady = Promise.resolve(); }
 async function saveLinks() {
   if (!linksUid || !await mergeStored()) return false;
-  try { localStorage.setItem('cupidon.links.' + linksUid, JSON.stringify(await encryptJSON(linksLock || await getLinksLock(), links))); return true; }
+  const uid = linksUid, name = 'cupidon.links.' + uid;
+  try {
+    // Another tab may have saved newer links since this tab read the box: take them in first, or they would be overwritten.
+    const box = readJSON(name);
+    if (box) {
+      try { const saved = await decryptJSON(linksLock || await getLinksLock(), box); for (const id of Object.keys(saved)) if (!(id in links) && !deletedIds.has(id)) links[id] = saved[id]; }
+      catch { backUpBad(uid, box); }
+    }
+    if (uid !== linksUid) return false;   // signed out meanwhile
+    localStorage.setItem(name, JSON.stringify(await encryptJSON(linksLock || await getLinksLock(), links)));
+    return true;
+  }
   catch { return false; }   // no key, private mode or full: the secret stays in memory only (never unlocked on disk)
 }
 const saveOld = old => { try { Object.keys(old).length ? localStorage.setItem(OLD_LINKS_KEY, JSON.stringify(old)) : localStorage.removeItem(OLD_LINKS_KEY); } catch { /* nothing to do */ } };
@@ -74,8 +105,9 @@ const saveOld = old => { try { Object.keys(old).length ? localStorage.setItem(OL
 const unsavedLinks = new Set();
 // Returns true once the secret is locked on this device. Tries the account key three times (offline / busy server).
 async function keepLinkSecret(id, secret) {
+  if (secret) { deletedIds.delete(id); links[id] = secret; unsavedLinks.add(id); }   // at once, even while the key is slow: the done screen can show the link
   await linksReady;
-  if (secret) { links[id] = secret; unsavedLinks.add(id); } else { delete links[id]; unsavedLinks.delete(id); }
+  if (!secret) { deletedIds.add(id); delete links[id]; unsavedLinks.delete(id); }
   const old = readJSON(OLD_LINKS_KEY) || {};
   if (id in old) { delete old[id]; saveOld(old); }   // never left behind in the old unlocked store
   for (const pause of [0, 1000, 3000]) {
@@ -84,6 +116,11 @@ async function keepLinkSecret(id, secret) {
   }
   return !secret;
 }
+// The preview opens only when HIS device says so: pressing the real button writes a short-lived marker (read once by her page,
+// girl.js isPreview) and opens a NEW tab. Copying the address or the link, or sending that page to her, never makes a preview.
+const markPreview = id => { if (typeof id === 'function') id = id(); if (!id) return; try { localStorage.setItem('cupidon.preview.' + id, String(Date.now())); } catch { /* private mode: the page stays the real one */ } };
+// id: the letter's id, or a function that gives it
+function markOnPress(a, id) { ['click', 'auxclick'].forEach(ev => a.addEventListener(ev, () => markPreview(id))); }
 // Moves his own letters' secrets out of the old unlocked store.
 async function adoptOldLinks(ids) {
   const old = readJSON(OLD_LINKS_KEY);
@@ -269,10 +306,10 @@ async function answerOf(id, m) {
 }
 
 // Each letter is in one of 8 states (a coloured label on its row), and has one main button for that state.
-// unpaid · notOpened · opened · waiting (old letters: no "opened" record) · yes (dish + day) · dish (dish, day together)
+// unpaid · checking (manual payment: his receipt is waiting for us) · notOpened · opened · waiting (old letters: no "opened" record) · yes (dish + day) · dish (dish, day together)
 // · letterOnly · locked
 function rowState(r, m, a) {
-  if (r.status !== 'active') return 'unpaid';
+  if (r.status !== 'active') return r.payCheck ? 'checking' : 'unpaid';
   if (m.answer) return a && !a.date ? 'dish' : 'yes';
   if (r.locked) return 'locked';   // before "letter only": a locked letter-only letter still needs its Unlock button
   if (m.ask === 'none') return 'letterOnly';
@@ -326,7 +363,11 @@ async function letterRow(r) {
   if (state === 'unpaid') {
     status.textContent = t('rowUnpaid');
     first = btn(t('payAndSend'));
-    first.onclick = () => goPay(r.id, first);
+    first.onclick = () => goPay(r.id, first, r);
+  } else if (state === 'checking') {
+    status.textContent = t('rowChecking');
+    first = btn(t('manualDetails'));
+    first.onclick = () => goPay(r.id, first, r);
   } else if (state === 'yes' && a?.date && a.time) {
     first = btn(t('himCal'));
     first.onclick = () => { try { hisCalendar(r, m, a); } catch { toast(t('actionFail')); } };
@@ -342,6 +383,7 @@ async function letterRow(r) {
     status.textContent = t('rowNoReply');
   }
   main.append(chip, name, meta, status);
+  if (r.gift) main.append(Object.assign(document.createElement('p'), { className: 'lr-meta lr-gift', textContent: t('rowGift') }));
   if (state === 'waiting') status.hidden = true;   // the label already says it
   const seen = seenParts(r, a).filter(([key]) => !(key === 'rowNotOpened' && state === 'notOpened'))   // the label says it
     .map(([key, vals]) => t(key, vals));
@@ -352,7 +394,8 @@ async function letterRow(r) {
   } else if (r.status === 'active') {
     const copy = btn(t('copyLink'));
     copy.onclick = async () => toast(t(await copyText(link) ? 'copied' : 'copyFail'));
-    const open = Object.assign(document.createElement('a'), { className: 'btn btn-ghost btn-small', textContent: t('open'), href: link });
+    const open = Object.assign(document.createElement('a'), { className: 'btn btn-ghost btn-small', textContent: t('open'), href: previewLink(link), target: '_blank', rel: 'noopener' });   // her page in preview: his try never marks it opened or uses her answer
+    markOnPress(open, r.id);
     if (!first) first = copy;   // nothing else to do yet: sending the link again is the main thing
     actions.append(copy, open);
   }
@@ -363,7 +406,8 @@ async function letterRow(r) {
   del.onclick = async () => {
     if (!armed) {
       del.textContent = t('delAgain');
-      armed = setTimeout(() => { armed = null; del.textContent = t('del'); }, 4000);
+      if (state === 'checking') toast(t('delChecking'));   // his receipt is waiting: deleting the letter loses the paid order
+      armed = setTimeout(() => { armed = null; del.textContent = t('del'); }, state === 'checking' ? 7000 : 4000);
       return;
     }
     clearTimeout(armed);
@@ -699,7 +743,18 @@ function showBad(bad) {
 // (popstate) goes one step back. idx = place of the step in stepList(); base = the lowest idx reachable inside the form
 // by going back in history. The address hash is never touched: it picks his views (#new, #sealed, #paid-…).
 const stepList = () => [1, 2, 3, 4, 5].filter(n => n !== 3 || ask() !== 'none');
-const histState = () => (history.state?.form ? history.state : null);
+// Every form entry carries the "epoch" of the form it belongs to. A sealed letter starts a new epoch, so the entries left over
+// from before it are ignored (they would show an old step on an empty form). Kept per tab: a reload keeps its own form's entries.
+const EPOCH_KEY = 'cupidon.formEpoch';
+// Did this tab start on the form itself (a bookmark or a typed address)? Then no entry of ours lies before the form entries.
+const startedInForm = (() => {
+  try {
+    if (sessionStorage.getItem('cupidon.tabStart') === null) sessionStorage.setItem('cupidon.tabStart', location.hash === '#new' ? 'form' : 'other');
+    return sessionStorage.getItem('cupidon.tabStart') === 'form';
+  } catch { return false; }
+})();
+let epoch = Number(tryGet(sessionStorage, EPOCH_KEY)) || 0;
+const histState = () => (history.state?.form && (history.state.epoch || 0) === epoch ? history.state : null);
 let pendingStep = 0;   // a step to show once a history jump (history.go) has landed
 let jumping = 0;       // a history jump is on its way: step buttons wait for it (a quick double tap would land on the wrong step)
 let entryState = null; // the history entry's step as it was when the form opened (a reload keeps it): his draft goes back there
@@ -733,7 +788,7 @@ function showStep(n, focus = false) {
   $$('#createForm .step').forEach(sec => (sec.hidden = +sec.dataset.step !== n));
   stepBar();
   refreshPhone();
-  if (n === 5) buildSummary();
+  if (n === 5) { buildSummary(); if (changed) refreshFree(); }
   if (!changed) return;
   setFormError(null);
   closePreview(false);
@@ -743,7 +798,7 @@ function showStep(n, focus = false) {
 }
 const writeState = (how, n, base) => {
   const idx = stepList().indexOf(n);
-  history[how === 'push' ? 'pushState' : 'replaceState']({ form: 1, step: n, idx, base: Math.min(base, idx) }, '');
+  history[how === 'push' ? 'pushState' : 'replaceState']({ form: 1, epoch, step: n, idx, base: Math.min(base, idx) }, '');
 };
 // Forward: checks every step on the way and stops at the first one with a problem.
 function forwardTo(n) {
@@ -780,8 +835,16 @@ function goStep(n) { if (jumping) return; if (n > step) forwardTo(n); else if (n
 $('#stepbar').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) goStep(+b.dataset.go); });
 $('#nextBtn').addEventListener('click', () => { const list = stepList(); goStep(list[list.indexOf(step) + 1]); });
 $('#backBtn').addEventListener('click', () => { const list = stepList(); const prev = list[list.indexOf(step) - 1]; if (prev) goStep(prev); });
+markOnPress($('#doneOpen'), () => lastSealed?.id);
+$('#authRetry').addEventListener('click', () => location.reload());
 addEventListener('popstate', () => {
   clearTimeout(jumping); jumping = 0;
+  // A form entry from before the last sealed letter (browser Back after sealing): skip it, it would open an empty form on an old step.
+  if (location.hash === '#new' && history.state?.form && (history.state.epoch || 0) !== epoch) {
+    // Nothing of ours before these entries (he opened /#new straight from a bookmark): one more Back would leave the site.
+    if (startedInForm) location.replace(location.pathname + '#'); else history.back();
+    return;
+  }
   if ($('#pvCol').classList.contains('is-open') && !history.state?.preview) { closePreview(true, true); return; }   // Back closes her phone first
   if (location.hash !== '#new' || $('#view-create').hidden) { pendingStep = 0; return; }   // leaving the form: route() handles it
   const s = histState();
@@ -839,6 +902,22 @@ function buildSummary() {
   if (!none) groups.push(group(3, [[t('sumTrip'), t(pickup() ? 'pickupYes' : 'pickupNo')], [t('sumDishes'), dishes.map(d => (d.name || '').trim()).filter(Boolean).join(', ')]]));
   groups.push(group(4, [[t('openT'), t('open_' + opening())], [t('themeT'), t('theme_' + themeId())], ...(none ? [] : [[t('secretT'), cut(secretBox.value.trim())]])]));
   box.replaceChildren(...groups);
+  showFreeNote();
+}
+
+// "Free letters from us: N" under the summary. The count is asked again each time he reaches step 5 (the admin may have just given one).
+function showFreeNote() {
+  const note = $('#freeNote');
+  note.hidden = !(freeLeft > 0);
+  note.textContent = freeLeft > 0 ? t('giftLeft', { n: freeLeft }) : '';
+}
+async function refreshFree() {
+  const uid = user?.uid;
+  if (!uid) return;
+  try {
+    const got = await store.linkKey();
+    if (user?.uid === uid) { freeLeft = got.freeLetters || 0; payMode = got.payMode === 'manual' ? 'manual' : 'online'; showFreeNote(); }
+  } catch { /* the line is only a hint: keep what we know */ }
 }
 
 // Her phone as a pop-up on smaller screens (beside the form on wide ones).
@@ -913,9 +992,16 @@ $('#createForm').addEventListener('submit', async e => {
       content: { ...locked, salt },
       meta: { girlName, from, pickup: content.pickup, ask: content.ask, dishes: list, answerKey }
     });
-    await keepLinkSecret(r.id, secret);
+    // A slow key call must not hold "Sealing…" (the letter already exists, and the secret lives only in this page until it is
+    // locked): after 8 s the done screen shows the link with "copy it now" while the saving goes on in the background.
+    const kept = keepLinkSecret(r.id, secret);
+    await Promise.race([kept, wait(8000)]);
+    kept.then(ok => { if (ok && lastSealed?.id === r.id) $('#linkUnsaved').hidden = !unsavedLinks.has(r.id); }, () => {});
     dropDraft();   // sealed: the draft has done its job
-    lastSealed = { id: r.id, pin: code, girlName, lang, status: r.status, price: r.price, link: inviteLink(r.id, secret) };
+    if (r.gift) freeLeft = Math.max(0, freeLeft - 1);
+    lastSealed = { id: r.id, pin: code, girlName, lang, status: r.status, price: r.price, link: inviteLink(r.id, secret), gift: !!r.gift };
+    checkId = null;   // a new letter: the Check button is about this one
+    epoch++; trySet(sessionStorage, EPOCH_KEY, String(epoch));   // the form's old history entries stop counting
     resetForm();
     location.hash = '#sealed';
   } catch (err) {
@@ -1109,17 +1195,26 @@ $('#startOver').addEventListener('click', () => {
 
 // ---------- sealed: pay, then the link ----------
 function showDone() {
-  const { pin: code, girlName, lang, status, price, link } = lastSealed;
+  const { pin: code, girlName, lang, status, price, link, gift } = lastSealed;
   const paid = status === 'active';
   // A link that could not be locked on this device lives only in this page: show it even before payment
   // (she can't open it until it is paid), because going to the payment page would lose it.
   const unsaved = !!link && unsavedLinks.has(lastSealed.id);
   const showLink = paid || unsaved;
   $('#payBox').hidden = paid;
+  const manual = payMode === 'manual';
+  const showManual = manual && !paid && manualInfo?.id === lastSealed.id;
+  $('#payText').dataset.t = manual ? 'manualNote' : 'payText';
+  $('#payText').textContent = t(manual ? 'manualNote' : 'payText');
+  $('#payText').classList.toggle('pay-note', manual);
+  $('#cardMarks').hidden = manual;
+  $('#payBtn').hidden = showManual;
+  renderManual(showManual);
   $('#linkPart').hidden = !showLink;
   $('#doneText').textContent = paid ? t('sealedText', { name: girlName }) : '';
   $('#doneText').hidden = !paid;
-  $('#payBtn').textContent = t('payBtn', { price: priceText(price) });
+  $('#giftNote').hidden = !(paid && gift);
+  $('#payBtn').textContent = t(manual ? 'manualPayBtn' : 'payBtn', { price: priceText(price) });
   $('#linkMissing').hidden = !paid || !!link;
   $('#linkUnsaved').hidden = !unsaved;   // not locked on this device: copy it now
   $('#donePin').textContent = code;
@@ -1129,7 +1224,7 @@ function showDone() {
     try { drawQR($('#qrCanvas'), link); $('.qr-row').hidden = !paid; } catch { $('.qr-row').hidden = true; }
     const msg = tr(lang, 'share');   // the message she receives, in the letter's language
     $('#doneLink').value = link;
-    $('#doneOpen').href = link;
+    Object.assign($('#doneOpen'), { href: previewLink(link), target: '_blank', rel: 'noopener' });   // preview: the copied / shared / QR link stays the real one
     $('#shareTg').href = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(msg)}`;
     $('#shareWa').href = `https://wa.me/?text=${encodeURIComponent(msg + ' ' + link)}`;
     const more = $('#shareMore');
@@ -1139,8 +1234,36 @@ function showDone() {
   showView('done');
 }
 
+// The card-transfer details (manual payment mode). Shown only after "Pay by card", for the letter in manualInfo.
+function renderManual(show) {
+  const box = $('#manualPay');
+  box.hidden = !show;
+  if (!show) return;
+  const m = manualInfo;
+  const amount = priceText(m.amount);
+  $('#mpAmount').textContent = amount;
+  $('#mpCard').textContent = m.card;
+  $('#mpName').textContent = m.cardName;
+  $('#mpCode').textContent = m.code;
+  $('#mpS1').textContent = t('manualS1', { amount });
+  // Only a t.me link is trusted for the button.
+  const ok = /^https:\/\/t\.me\//.test(m.botUrl || '');
+  $('#mpBot').hidden = !ok || store.DEMO;   // demo codes don't exist in the real bot (the href stays for tests)
+  if (ok) $('#mpBot').href = m.botUrl;
+  $('#mpDemo').hidden = !store.DEMO;
+}
+for (const [btn, from] of [['#mpCopyCard', '#mpCard'], ['#mpCopyCode', '#mpCode']]) {
+  $(btn).addEventListener('click', async () => toast(t(await copyText($(from).textContent) ? 'manualCopied' : 'copyFail')));
+}
+// Demo only: there is no real bot, so this button stands in for "I sent the receipt".
+$('#mpDemo').addEventListener('click', async () => {
+  if (!manualInfo) return;
+  try { await store.demoReceipt(manualInfo.id); setPayError('payChecking'); toast(t('chip_checking')); }
+  catch { toast(t('actionFail')); }
+});
+
 // Opens the payment page (Rahmat/Octo, or the test page). He comes back to index.html?paid=<id> (Rahmat/Octo) or #paid-<id> (test page).
-async function goPay(id, button) {
+async function goPay(id, button, row) {
   button.disabled = true;
   const label = button.textContent;
   button.textContent = t('openingPay');
@@ -1148,6 +1271,20 @@ async function goPay(id, button) {
   try {
     const r = await store.startPayment(id, ui);
     if (r.alreadyPaid) { button.disabled = false; button.textContent = label; await afterPayment(id); return; }
+    if (r.manual) {   // card transfer: show the details here, no redirect
+      manualInfo = { id, ...r.manual };
+      if (!lastSealed || lastSealed.id !== id) {
+        const m = row?.meta || {};
+        lastSealed = { id, pin: m.pin, girlName: m.girlName, lang: m.lang || row?.lang, status: row?.status || 'unpaid', price: row?.price ?? r.manual.amount, gift: false, link: linkFor(id, !!m.answerKey) };
+      }
+      payMode = 'manual';
+      button.disabled = false; button.textContent = label;
+      showDone();
+      if (row?.payCheck && row.status !== 'active') setPayError('payChecking');
+      $('#checkPayBtn').hidden = false;
+      $('#mpBot').scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      return;
+    }
     location.href = r.payUrl;
   } catch (e) {
     const key = e?.reason === 'too-many-payments' ? 'payTooMany' : 'payFail';
@@ -1158,29 +1295,44 @@ async function goPay(id, button) {
   }
 }
 $('#payBtn').addEventListener('click', () => lastSealed && goPay(lastSealed.id, $('#payBtn')));
-$('#checkPayBtn').addEventListener('click', () => lastSealed && afterPayment(lastSealed.id));
+$('#checkPayBtn').addEventListener('click', () => { const id = checkId || lastSealed?.id; if (id) afterPayment(id); });   // the letter being checked wins
 
 // Back from the payment page: ask the server (which asks the payment company), then show the link.
+let checkId = null;   // the letter being checked: the Check button still works when his list could not be loaded
 async function afterPayment(id) {
+  checkId = id;
   // Show the "checking" line (inside the payment box) at once; the link part stays hidden until the payment is confirmed.
   $('#payBox').hidden = false;
   $('#linkPart').hidden = true;
   $('#doneText').hidden = true;
+  $('#giftNote').hidden = true;
   showView('done');
   setPayError('checkingPay');
   $('#checkPayBtn').hidden = true;
-  let status = 'unpaid', payment = '';
-  try { ({ status, payment = '' } = await store.checkPayment(id)); } catch { /* shown below */ }
+  let status = 'unpaid', payment = '', checkFailed = false, listed = false;
+  try { ({ status, payment = '' } = await store.checkPayment(id)); } catch { checkFailed = true; }
+  let checking = false;
   try {
     const row = (await store.listMine()).find(r => r.id === id);
+    listed = true;
+    checking = !!row?.payCheck && row.status !== 'active';
     await linksReady;
-    if (row?.meta) lastSealed = { id, pin: row.meta.pin, girlName: row.meta.girlName, lang: row.meta.lang || row.lang, status: row.status, price: row.price, link: linkFor(id, !!row.meta.answerKey) };
+    if (row?.meta) lastSealed = { id, pin: row.meta.pin, girlName: row.meta.girlName, lang: row.meta.lang || row.lang, status: row.status, price: row.price, gift: !!row.gift, link: linkFor(id, !!row.meta.answerKey) };
   } catch { /* keep what we have */ }
-  if (!lastSealed || lastSealed.id !== id) { location.hash = ''; route(); return; }
+  if (!lastSealed || lastSealed.id !== id) {
+    if (listed) { location.hash = ''; route(); return; }   // his list loaded and has no such letter: nothing to show
+    // We could not ask the server (no connection?): say so and keep the Check button, instead of sending him home with no word.
+    $('#payBtn').hidden = true;   // its letter is not known here yet
+    setPayError('payCheckFail');
+    $('#checkPayBtn').hidden = false;
+    return;
+  }
   if (status === 'active') lastSealed.status = 'active';
   const active = lastSealed.status === 'active';   // the list may already say "active" even if the check call failed
+  const refused = !active && (payment === 'canceled' || payment === 'failed');
+  if (refused && manualInfo?.id === id) manualInfo = null;   // the refused order code must not stay on screen: a new press gives a new one
   showDone();
-  setPayError(active ? null : ((payment === 'canceled' || payment === 'failed') ? 'payCanceled' : payment === 'paid-no-letter' ? 'paidNoLetter' : 'payPending'));
+  setPayError(active ? null : checkFailed ? 'payCheckFail' : (refused ? (payMode === 'manual' ? 'receiptRefused' : 'payCanceled') : payment === 'paid-no-letter' ? 'paidNoLetter' : checking ? 'payChecking' : 'payPending'));
   $('#checkPayBtn').hidden = active;
 }
 
@@ -1199,7 +1351,8 @@ store.signInRedirectError().then(code => {
   if (code) $('#signInError').textContent = t(code === 'auth/unauthorized-domain' ? 'signInDomain' : 'signInFail');
 });
 let paidReturn = linkParam('paid', 'paid-', '[A-Za-z0-9]{16,40}');
-store.onUser(u => {
+store.onUser((u, failed) => {
+  if (failed) { showView('authfail'); return; }   // the sign-in code did not load: not the same as signed out
   // Signed out (button, another tab or an expired session): start the page again from nothing, so no list row,
   // link or code of the last person stays in the page (security scan 2026-11-14, F1). Another tab can also switch
   // straight from one account to another with no sign-out in between: treated the same (scan 2026-11-14 #2, F2).

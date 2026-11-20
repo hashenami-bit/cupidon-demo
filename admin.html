@@ -14,6 +14,8 @@
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/admin-dashboard.css">
+<link rel="stylesheet" href="css/admin-crm.css">
 <script type="module" src="js/admin.js"></script>
 </head>
 <body>
@@ -56,6 +58,8 @@
 
     <section id="tab-overview" class="ad-tab" hidden>
       <h1>Overview</h1>
+      <div class="ad-filters" id="rangeChips" role="group" aria-label="Period"></div>
+      <p class="ad-hint" id="rangeNote" hidden></p>
       <div class="ad-kpis" id="kpis"></div>
       <div class="ad-sheet">
         <h2>Where letters get to</h2>
@@ -74,6 +78,30 @@
           <div class="ad-chart" id="chartMoney"></div>
         </div>
       </div>
+      <div class="ad-grid2">
+        <div class="ad-sheet" hidden>
+          <h2>Letters opened per day</h2>
+          <p class="ad-lead"></p>
+          <div class="ad-chart" id="chartOpened"></div>
+        </div>
+        <div class="ad-sheet" hidden>
+          <h2>New accounts per day</h2>
+          <p class="ad-lead"></p>
+          <div class="ad-chart" id="chartAccounts"></div>
+        </div>
+      </div>
+      <div class="ad-grid2">
+        <div class="ad-sheet" hidden>
+          <h2>Speed</h2>
+          <p class="ad-lead">Middle time to open and to answer.</p>
+          <div id="speed"></div>
+        </div>
+        <div class="ad-sheet" hidden>
+          <h2>Who writes what</h2>
+          <p class="ad-lead">Letters by language and by kind.</p>
+          <div id="split"></div>
+        </div>
+      </div>
       <div class="ad-sheet">
         <h2>Needs you</h2>
         <ul class="ad-todo" id="todo"></ul>
@@ -86,9 +114,10 @@
       <div class="ad-tools">
         <input type="search" id="letterSearch" class="ad-input" placeholder="Search her name, his name, email, code or id" aria-label="Search letters">
         <div class="ad-filters" id="letterFilters" role="group" aria-label="Filter by state"></div>
+        <button type="button" class="ad-btn ad-btn-quiet" id="letterCsv">Export CSV</button>
       </div>
       <div class="ad-table-wrap"><table class="ad-table" id="letterTable">
-        <thead><tr><th>Sealed</th><th>From → to</th><th>State</th><th>Code</th><th>Her answer</th><th>Customer</th></tr></thead>
+        <thead><tr><th data-sort="sealed" data-first="desc">Sealed</th><th data-sort="name">From → to</th><th data-sort="state">State</th><th>Code</th><th data-sort="answer">Her answer</th><th data-sort="customer">Customer</th></tr></thead>
         <tbody></tbody>
       </table></div>
       <p class="ad-empty" id="letterEmpty" hidden>No letters match.</p>
@@ -98,10 +127,11 @@
       <h1>Customers</h1>
       <div class="ad-tools">
         <input type="search" id="custSearch" class="ad-input" placeholder="Search email, name, tag or note" aria-label="Search customers">
-        <div class="ad-filters" id="custFilters" role="group" aria-label="Filter by tag"></div>
+        <div class="ad-filters" id="custFilters" role="group" aria-label="Filter customers"></div>
+        <button type="button" class="ad-btn ad-btn-quiet" id="custCsv">Export CSV</button>
       </div>
       <div class="ad-table-wrap"><table class="ad-table" id="custTable">
-        <thead><tr><th>Customer</th><th>Joined</th><th>Last seen</th><th>Letters</th><th>Paid</th><th>Tags and note</th></tr></thead>
+        <thead><tr><th data-sort="customer">Customer</th><th data-sort="joined" data-first="desc">Joined</th><th data-sort="seen" data-first="desc">Last seen</th><th data-sort="letters" data-first="desc">Letters</th><th data-sort="paid" data-first="desc">Paid</th><th data-sort="stage">Stage</th><th data-sort="follow">Follow-up</th><th>Tags and note</th></tr></thead>
         <tbody></tbody>
       </table></div>
       <p class="ad-empty" id="custEmpty" hidden>No customers match.</p>
@@ -112,9 +142,10 @@
       <div class="ad-tools">
         <input type="search" id="paySearch" class="ad-input" placeholder="Search payment id, letter id or email" aria-label="Search payments">
         <div class="ad-filters" id="payFilters" role="group" aria-label="Filter payments"></div>
+        <button type="button" class="ad-btn ad-btn-quiet" id="payCsv">Export CSV</button>
       </div>
       <div class="ad-table-wrap"><table class="ad-table" id="payTable">
-        <thead><tr><th>Started</th><th>Amount</th><th>State</th><th>Letter</th><th>Customer</th><th></th></tr></thead>
+        <thead><tr><th data-sort="started" data-first="desc">Started</th><th data-sort="amount" data-first="desc">Amount</th><th data-sort="state">State</th><th data-sort="letter">Letter</th><th data-sort="customer">Customer</th><th></th></tr></thead>
         <tbody></tbody>
       </table></div>
       <p class="ad-empty" id="payEmpty" hidden>No payments match.</p>
@@ -126,6 +157,15 @@
       <div class="ad-sheet">
         <h2>Settings on the server</h2>
         <dl class="ad-dl" id="settings"></dl>
+      </div>
+      <div class="ad-sheet" id="activitySheet" hidden>
+        <h2>Admin activity</h2>
+        <button type="button" class="ad-btn ad-btn-quiet" id="activityBtn">Show</button>
+        <ul class="ad-mini" id="activityList"></ul>
+      </div>
+      <div class="ad-sheet">
+        <h2>Nightly cleanup</h2>
+        <p id="cleanupLine"></p>
       </div>
       <div class="ad-sheet">
         <h2>Where to look</h2>
